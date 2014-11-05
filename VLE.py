@@ -24,6 +24,7 @@ Referências:
 """
 
 from numpy import log, exp, size, mean, abs, zeros
+
 class Fase:
     '''
     ==============================================================================
@@ -75,71 +76,49 @@ class Condicao:
         self.Beta    = Beta
 
 class VLE:        
-    '''
-    ==============================================================================
-            Definição:
-    ==============================================================================    
-    Classe para realizar os cálculos do equilíbrio líquido-vapor, desde o cálculo de
-    coeficiente de atividade aos cálculos de ponto de bolha e de orvalho.
-    
-    ==============================================================================
-            Entradas:
-    ==============================================================================        
-    *Algoritmo:
-        O método desejado, vide ``Métodos``. Inserido em forma de *string*;
-    *Componentes:
-        Nomes dos componentes a serem usados. Inserido em forma de uma lista que contém o
-        método ``Componente_Caracterizar`` do ``Thermo_Data_Bank`` para cada um dos componentes.
-          Ex.: 
-           Componentes = [TDB.Componente_Caracterizar('Acetone',T),TDB.Componente_Caracterizar('Metanol',T)]
-          Onde TDB é Thermo_Data_Bank
-    *Número de coordenação(z):
-        Número de coordenação, inserido como número. Comumente é um valor inteiro, mas dado em *float*, em geral o valor usado é 10.0 e é um argumento que pode não ser inserido.
-    *Temperatura do sistema (Temp):
-        Dada em kelvin, é inserido como *float* e é um argumento que pode não ser inserido
-    *Estimativa para gamma (estgama):
-        Inserido em forma de *float* e é um argumento que pode não ser inserido.
-    *Estimativa para phi (estphi):
-        Inserido em forma de *float* e e é um argumento que pode não ser inserido.
-    *Estimativa para Beta (estBeta):
-        Inserido em forma de *float* e e é um argumento que pode não ser inserido.
-    *Tolerância do algoritmo (tolAlg):    
-        Tolerância desejada para a operação dos métodos, inserido como número.
-    *Tolerância do equilíbrio (toleq):
-        Tolerância desejada para o equilíbrio, inserido como número.
-    *Núemro máximo de iterações (maxiter):
-        Número máximo de iterações desejadas para a operação dos métodos, inserido como número.
-    *Modelo da fase líquida (model_liq):
-        Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
-        e o segundo é uma lista de parâmetros do modelo que são acessados no ``Thermo_Data_Bank``.
-          Ex.:
-              model_liq = ['UNIQUAC', [a,z_UNIQUAC]]
-    *Modelo da fase vapor (model_vap):
-        Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
-        e o segundo é uma lista contendo a regra utilizada e os parâmetros do modelo acessados no ``Thermo_Data_Bank``.
-          Ex.:
-              model_vap=['VIRIAL',['Hayden_OConnel',Eta]]
 
-    ==============================================================================
-            Métodos:
-    ==============================================================================        
-    *Second_Virial_Coef:
-        Calcula o segundo coeficiente Virial.
-    *Coeficiente_Atividade:
-        Cálculo do coeficiente de atividade.
-    *Coeficiente_Fugacidade:
-        Cálculo do coeficietne de fugacidade.
-    *Flash:
-        Cálculo de flash.
-    *Phisat:
-        Cálculo de phisat (coeficiente de fugacidade nas condições de saturação).
-    *PontoBolha:
-        Cálculo do ponto de bolha.
-    *PontoOrvalho:
-        Cálculo do ponto de orvalho.
-    '''
     def __init__(self,Algoritmo,Componentes,z=None,Temp=None,Pressao=None,estgama=None,estphi=None,estBeta = 0.5, tolAlg=1e-10, toleq=1e-4, maxiter=100, model_liq=['UNIQUAC',[None]], model_vap=['VIRIAL',['Hayden_OConnel',None]]):    
+        '''
+        ==============================================================================
+        Definição:
+        ==============================================================================    
+        Classe para realizar os cálculos do equilíbrio líquido-vapor, desde o cálculo de
+        coeficiente de atividade aos cálculos de ponto de bolha e de orvalho.
         
+        ==============================================================================
+        Entradas:
+        ==============================================================================        
+        *Algoritmo: O método desejado, vide ``Métodos``. Inserido em forma de *string*;
+        *Componentes:Nomes dos componentes a serem usados. Inserido em forma de uma lista que contém o
+        método ``Componente_Caracterizar`` do ``Thermo_Data_Bank`` para cada um dos componentes.
+        Ex.: Componentes = [TDB.Componente_Caracterizar('Acetone',T),TDB.Componente_Caracterizar('Metanol',T)]
+        Onde TDB é Thermo_Data_Bank
+        *Número de coordenação(z): Número de coordenação, inserido como número. Comumente é um valor inteiro, mas dado em *float*, em geral o valor usado é 10.0 e é um argumento que pode não ser inserido.
+        *Temperatura do sistema (Temp): Dada em kelvin, é inserido como *float* e é um argumento que pode não ser inserido
+        *Estimativa para gamma (estgama): Inserido em forma de *float* e é um argumento que pode não ser inserido.
+        *Estimativa para phi (estphi): Inserido em forma de *float* e e é um argumento que pode não ser inserido.
+        *Estimativa para Beta (estBeta): Inserido em forma de *float* e e é um argumento que pode não ser inserido.
+        *Tolerância do algoritmo (tolAlg):Tolerância desejada para a operação dos métodos, inserido como número.
+        *Tolerância do equilíbrio (toleq): Tolerância desejada para o equilíbrio, inserido como número.
+        *Núemro máximo de iterações (maxiter): Número máximo de iterações desejadas para a operação dos métodos, inserido como número.
+        *Modelo da fase líquida (model_liq): Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
+        e o segundo é uma lista de parâmetros do modelo que são acessados no ``Thermo_Data_Bank``.
+        Ex. model_liq = ['UNIQUAC', [a,z_UNIQUAC]]
+        *Modelo da fase vapor (model_vap): Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
+        e o segundo é uma lista contendo a regra utilizada e os parâmetros do modelo acessados no ``Thermo_Data_Bank``.
+        Ex.: model_vap=['VIRIAL',['Hayden_OConnel',Eta]]
+        
+        ==============================================================================
+        Métodos:
+        ==============================================================================        
+        *Second_Virial_Coef:  Calcula o segundo coeficiente Virial.
+        *Coeficiente_Atividade:  Cálculo do coeficiente de atividade.
+        *Coeficiente_Fugacidade: Cálculo do coeficietne de fugacidade.
+        *Flash: Cálculo de flash.
+        *Phisat: Cálculo de phisat (coeficiente de fugacidade nas condições de saturação).
+        *PontoBolha: Cálculo do ponto de bolha.
+        *PontoOrvalho:  Cálculo do ponto de orvalho.
+        '''
         # Definindo o __init__ de VLE:
         self.Algoritmo = Algoritmo  # Algoritmo a ser utilizado: Flash, PontoBolha, PontoOrvalho, Coeficiente_Atividade, Coeficiente_Fugacidade
         self.NC = size(Componentes) # Número de componentes da mistura
