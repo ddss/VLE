@@ -13,7 +13,7 @@ class Componente_Caracterizar:
     
     def __init__(self,Componente,ConfigPsat=('Prausnitz4th',None),T=298.15):
         '''
-        
+        Algoritmo para caracterizar os componentes.
         '''
         self.__lista_EqPsat = ['Prausnitz4th'] # Lista dos métodos utilizados para o cálculo da pressão de vapor
 
