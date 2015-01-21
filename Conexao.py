@@ -6,17 +6,74 @@ from scipy import exp, log
 from scipy.optimize import root
 from numpy import zeros
 
-conector = connect('testeando.db')          # Conecta a rotina ao banco de dados
-cursor   = conector.cursor()                # Permite a navegação no banco de dados a partir da rotina
+conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
+cursor   = conector.cursor()                       # Permite a navegação no banco de dados a partir da rotina
 
 class Componente_Caracterizar:
     
     def __init__(self,Componente,ConfigPsat=('Prausnitz4th',None),T=298.15):
         '''
         Algoritmo para caracterizar os componentes.
+        
+        ========
+        Entradas
+        ========
+        * Componente ('string')     : Nome do componente conforme constanta no Banco de Dados
+            * A lista de componentes disponíveis no banco de dados pode ser acessada da seguinte forma: ::
+                
+                Componente = Componente_Caracterizar(None) 
+                
+        * ConfigPsat ('tuple' or 'list'): São as opções para o cálculo da pressão de vapor. Primeiro argumento são as referências disponíveis ('Prausnitz4th') e o segundo o número da equação conforme consta no banco de dados.
+        * T: Temperatura em Kelvin
+        
+        =========
+        Atributos
+        =========
+        As propriedades estão disponíveis na forma de atributos:
+                  
+		* Temperatura crítica em Kelvin;
+		* Pressão crítica em bar;
+		* Fator acêntrico (Adimensional);
+		* Massa molar em g.mol-1;
+		* Raio médio de giração (Adimensional) ;
+		* Fator de compressibilidade crítico (Adimensional) ;
+		* Volume molar crítico (Adimensional) ;
+		* Momento dipolo (Adimensional)
+		* Parâmetros do modelo UNIQUAC (Adimensionais);
+		* Parâmetros para o cálculo de Psat, vide [1];
+		* Temperatura mínima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
+		* Temperatura máxima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
+		* Densidade do líquido em g/cm3;
+		* Temperatura da densidade do líquido em Kelvin. 
+  
+        =======
+        Métodos     
+        =======
+        Os métodos dispníveis desta classe são:
+            * ``Pvap_Prausnitz_4th``:
+                * Método para o cálculo da pressão de vapor. Vide documentação do método.
+            * ``Propriedade``:
+                * Método para a busca no banco de dados das propriedades puras dos componentes. Vide documentação do método.
+        
+        =======
+        Exemplo
+        =======
+        * A classe é acessada de forma usual, como pode ser visto no caso a seguir: ::
+        
+            Componente = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
         self.__lista_EqPsat = ['Prausnitz4th'] # Lista dos métodos utilizados para o cálculo da pressão de vapor
-
+        
+        if Componente == None:
+            print self.lista_componentes()        
+            raise NameError(u'Insira um dos componentes mostrados na lista.')
+            
         # COMPONENTE & ID
         self.Nome = Componente # Nome do componente
         self.Validacao_Nome()  # Verificar se o nome do componente está no banco
@@ -38,12 +95,12 @@ class Componente_Caracterizar:
 
     def lista_componentes(self):
         '''
-        Algoritmo para gerar uma lista contendo os nomes dos componentes disponíveis no banco de dados.
+        Método para gerar uma lista contendo os nomes dos componentes disponíveis no banco de dados.
         
-        =====
-        Saída
-        =====
-        * Uma lista contendo os nomes dos componentes.
+        ======
+        Saídas
+        ======
+        * Retorna uma lista contendo os nomes dos componentes.
         '''        
         cursor.execute('SELECT Nome FROM Componentes')  # Seleciona a coluna Nome da tabela Componentes do banco de dados
         row = cursor.fetchall()                         # Retorna a coluna selecionada em forma de lista de tuplas
@@ -52,22 +109,24 @@ class Componente_Caracterizar:
 
     def Validacao_Nome(self):
         '''
-        Subrotina para validar a entrada ``Componente``. Comparando esta entrada com os nomes obtidos pelo método ``lista_componentes``. Se a entrada de ``Componente`` não passam pela validação, há a emissão de um erro como saída deste método. O erro emitido interrompe a execuçao do programa.
-
+        Método para validar a entrada ``Componente``. Comparando esta
+        entrada com os nomes obtidos pelo método ``lista_componentes``.
+        Se a entrada de ``Componente`` não passam pela validação, há a emissão
+        de um erro como saída deste método. O erro emitido interrompe a execuçao do programa.
         '''
-        # Validação do nome do método de cálculo da pressão de vapor
+        # Validação do nome do componente
         if self.Nome not in self.lista_componentes():                               
             raise NameError(u'O nome do componente não consta no banco de dados.')  # Emite um erro com a mensagem inserida no método
     
     def Busca_ID(self):
         '''
-        Subrotina para busca do ID, chave primária, da tabela Componmentes no banco de dados.
+        Método para busca do ID, chave primária, da tabela Componmentes no banco de dados.
         
-        =====
-        Saída
-        =====
+        ======
+        Saídas
+        ======
         
-        * Gera a ID em forma de número inteiro. Esta saída é gerada como atributo da classe ``Componente_Caracterizar``.
+        * Gera o atributo ID em forma de número inteiro
         '''
         cursor.execute('SELECT ID FROM Componentes WHERE  Nome=?',(self.Nome,)) # Busca do ID do componente na tabela Componentes no banco de dados
         row = cursor.fetchall()                                                 # Retorna a linha contendo o ID em forma de lista de tupla
@@ -77,11 +136,11 @@ class Componente_Caracterizar:
         '''
         Método para buscar a forma da equação para o cálculo de  Psat no banco de dados.
                 
-        =====
-        Saída
-        =====
+        ======
+        Saídas
+        ======
         
-        * A saída deste método é uma lista contendo as formas de equações, que são números inteiros, para o componente requerido.
+        * Este método retorna uma lista contendo as formas de equações, que são números inteiros, para o componente requerido.
         '''
         
         if self.EqPsat == self.__lista_EqPsat[0]: 
@@ -91,8 +150,10 @@ class Componente_Caracterizar:
 
     def Validacao_e_Default_de_EqPsat(self):
         '''
-        Este método valida as entradas de ``ConfigPsat``. Assim são validadas as entradas do método de cálculo de Psat e as formas de equações dos métodos. Se as entradas de ``ConfigPsat`` não passam pela validação, há a emissão de um erro como saída deste método. O erro emitido interrompe a execuçao do programa.
-        
+        Este método valida as entradas de ``ConfigPsat``. Assim são 
+        validadas as entradas do método de cálculo de Psat e as formas de equações dos métodos. 
+        Se as entradas de ``ConfigPsat`` não passam pela validação, há a emissão de um erro como 
+        saída deste método. O erro emitido interrompe a execuçao do programa.
         '''
         # VALIDAÇÃO DO NOME DO MÉTODO DE CÁLCULO DE PRESSÃO DE VAPOR
         
@@ -115,13 +176,18 @@ class Componente_Caracterizar:
         
     def warnings(self):
         '''        
-        Método para verificar se a temperatura inserida está dentro ou não da faixa de aplicação das fórmulas do calculo da pressão de vapor. Caso não esteja dentro da faixa de aplicabilidade, o programa gerará um aviso. Contudo a execução não será interrompida.
-        
+        Método para verificar se a temperatura inserida está dentro ou não da 
+        faixa de aplicação das fórmulas do calculo da pressão de vapor. 
+        Caso não esteja dentro da faixa de aplicabilidade, o programa gerará um aviso. 
+        Contudo a execução não será interrompida.
         '''
         # Verificação se a temperatura inserida está dentro ou não da faixa de aplicabilidade das fórmulas do cálculo de Psat
         if self.T < self.__TminPsat or self.T > self.__TmaxPsat:
             warn(u'A temperatura especificada está fora do range de aplicabilidade da equaçao de Psat') # Emite um aviso com a mensagem inserida no método. Contudo o programa continua a rodar
-  
+            # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+            if self.nEqPsat == 1:
+                if self.T > self.Tc:
+                    warn(u'A temperatura especificada está acima da temperatura crítica.') # Emite um aviso com a mensagem inserida no método. Contudo o programa continua a rodar
 
 
     def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,nEq,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
@@ -154,15 +220,15 @@ class Componente_Caracterizar:
         * Pvp_ini = 101325 bar
         * tol     = 1e-10
         
-        =====
-        Saída
-        =====
+        ======
+        Saídas
+        ======
         
         * Retorna a pressão de vapor em bar
         
-        =========
-        Refeência
-        =========
+        ===========
+        Referências
+        ===========
         
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
@@ -214,9 +280,9 @@ class Componente_Caracterizar:
             * Densidade do líquido;
             * Temperatura da densidade do líquido.
             
-        =========
-        Refeência
-        =========
+        ===========
+        Referências
+        ===========
         
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
@@ -259,7 +325,7 @@ class Componente_Caracterizar:
             self.__TminPsat = row[0][7]  #  Temperatura mínima de Psat  
             self.__TmaxPsat = row[0][8]  #  Temperatura máxima de Psat
             
-            # PARTE A SER FINALIZADA!!!!!!!!!!!!!!!!
+            # VALIDAÇAO DA TEMPERATURA, SE A MESMA PERTENCE AO INTERVALO DE APLICAÇAO
             self.warnings()    
             self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.nEqPsat,self.Tc,self.Pc)
 
