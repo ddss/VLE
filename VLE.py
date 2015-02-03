@@ -22,7 +22,7 @@ Referências:
   and Development, v. 14, n. 3, p. 209–216, jul. 1975.
 - SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
 """
-
+from warnings import warn
 from numpy import log, exp, size, mean, abs, zeros 
 
 class Fase:   
@@ -232,7 +232,7 @@ class VLE:
             model_vap = VIRIAL(Componentes)
             model_liq = UNIQUAC(Componentes,330.0,1)
             
-            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=395.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
             
         O acesso do valor da pressão do ponto de bolha é da seguinte forma:
         
@@ -529,7 +529,6 @@ class VLE:
                     elif Eta[i][j] >= 4.5:
                         E[i][j] = exp(Eta[i][j]*(42800.0/(ek[i][j]+22400.0) - 4.27))
                   
-            # -----------------------------------------------------------------------------------------------------------------------------------------------------------            
             # Parâmetros dependentes da temperatura:
             T_ast   = [[self.Temp/ek[i][j]                  for j in xrange(self.NC)] for i in xrange(self.NC)]
             T_astll = [[1/T_ast[i][j] - 1.6*w[i][j] for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -573,7 +572,7 @@ class VLE:
             parametro_f1    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             parametro_f2    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
                  
-            #k_interacao     = [[0.0 for j in xrange(NC)] for i in xrange(NC)] 
+            # Parâmetro de interação binária
                  
             k_int_binaria   = self.model_vap.k_int_binaria
             
@@ -599,54 +598,48 @@ class VLE:
                 for j in xrange(self.NC):
                     
                     if self.Componente[j].Grupo_funcional in ['Ketone','Aldehyde','Alkyl Nitrile','Ether',' Carboxylic Acid Ester']:
-                        
                         if i == j:
                             
                             parametro_a[i][j]        = -2.14e-4*mi_reduzido[j]-4.308e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                             
                     elif self.Componente[j].Grupo_funcional in ['Alkyl Halide', 'Mercaptan','Sulfide', 'Disulfides']:
-                        
                         if i == j:
                             
                             parametro_a[i][j]        = -2.188e-11*(mi_reduzido[j])**4 - 7.831e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                 
                     elif self.Componente[j].Grupo_funcional == 'Alcool':
-                        if self.Componente[j].Nome != 'Methanol':
+                        if self.Componente[j].Nome != 'Metanol':
                             if i == j:
                                 
                                 parametro_a[i][j]    =  0.0878
                                 parametro_b[i][j]    =  0.00908 + 0.0006957*mi_reduzido[j]
                         
-                    elif self.Componente[j].Nome == 'Methanol':
-                        
+                    elif self.Componente[j].Nome == 'Metanol':
                         if i == j:
                             
                             parametro_a[i][j]        = 0.0878
                             parametro_b[i][j]        = 0.0525
                     
-                    elif self.Componente[j].Nome == 'Water':
-                        
+                    elif self.Componente[j].Nome == 'Agua':
                         if i == j:
                             
                             parametro_a[i][j]        = -0.0109
                             parametro_b[i][j]        = 0.0
 
-                    else:
-                        
+                    else:  
                         if i == j:
                             
                             parametro_a[i][j]        = 0.0
                             parametro_b[i][j]        = 0.0
 
-            # PARÂMETROS DE MISTURA
+            # PARÂMETROS CRUZADOS
             
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     
                     if Caracteristica_mistura == 'Polar-Polar':
-                        
                         if i!=j:
                             
                             parametro_a[i][j]  = 0.5*(parametro_a[i][i]+parametro_a[j][j])
@@ -660,13 +653,12 @@ class VLE:
                             Pc[i][j]           = 4*( Tc[i][j]*(Pc[i][i]*Vc[i]/Tc[i][i] + Pc[j][j]*Vc[j]/Tc[j][j])/((Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0))**3) )
                     
                     elif Caracteristica_mistura == 'Apolar-Apolar': 
-                        
                         if i!=j:
                             
                             parametro_a[i][j]  = 0.0
                             parametro_b[i][j]  = 0.0
                             
-                            k_int_binaria[i][j]= 1 - ( (2*(Vc[i]*Vc[j])**1.0/6.0)/(Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0))  )**3
+#                            k_int_binaria[i][j]= 1 - ( (2*(Vc[i]*Vc[j])**1.0/6.0)/(Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0))  )**3
                             
                             w[i][j]            = 0.5*(w[i][i]+w[j][j])
                             
@@ -675,7 +667,6 @@ class VLE:
                             Pc[i][j]           = 4*( Tc[i][j]*(Pc[i][i]*Vc[i]/Tc[i][i] + Pc[j][j]*Vc[j]/Tc[j][j])/(Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0) )**3 )
         
                     elif Caracteristica_mistura in ['Apolar-Polar','Polar-Apolar']: 
-                        
                         if i!=j:
                             
                             parametro_a[i][j]  = 0.0
@@ -693,10 +684,9 @@ class VLE:
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     
+                    # Funções da corelação de Tsonopoulos. Todas em função de Tr.
                     parametro_f0[i][j]    = 0.1445 - 0.330/Tr[i][j] - 0.1385/(Tr[i][j])**2 - 0.0121/(Tr[i][j])**3 - 0.000607/(Tr[i][j])**8
-             
                     parametro_f1[i][j]    = 0.0637 + 0.331/(Tr[i][j])**2 - 0.423/(Tr[i][j])**3 - 0.008/(Tr[i][j])**8
-                    
                     parametro_f2[i][j]    = parametro_a[i][j]/(Tr[i][j])**6 - parametro_b[i][j]/(Tr[i][j])**8
             
             # CÁLCULO DO Bij
@@ -749,7 +739,7 @@ class VLE:
         if self.model_liq.Nome_modelo == 'UNIQUAC':
             
             if self.model_liq.FormaEq == 1:
-                # Caso tenha a diferenca do parametro a. A FormaEq 1 é a mais recorrente.
+                # Caso tenha em mãos a diferenca do parametro a. A FormaEq 1 é a mais recorrente.
                 a     = self.model_liq.Parametro_int
     
                 tau   = [[exp(-a[i][j]/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -766,7 +756,7 @@ class VLE:
                 Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
                 
             elif self.model_liq.FormaEq == 2:
-                # Caso tenha o parametro tau 
+                # Caso tenha em mãos o parametro tau 
                 tau     = self.model_liq.Parametro_int
     
                 phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
@@ -782,7 +772,7 @@ class VLE:
                 Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
 
             elif self.model_liq.FormaEq == 3:
-                # Caso tenha o parametro a do componente puro
+                # Caso tenha em mãos o parametro a do componente puro
                 a_ij  = self.model_liq.Parametro_int
     
                 tau   = [[exp(-(a_ij[i][j]-a_ij[j][j])/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -805,7 +795,7 @@ class VLE:
             alpha       = self.model_liq.alpha            
             
             if self.model_liq.FormaEq == 1:
-                # Caso tenha a diferenca do parametro g. A FormaEq 1 é a mais recorrente.
+                # Caso tenha em mãos a diferenca do parametro g. A FormaEq 1 é a mais recorrente.
                 g      = self.model_liq.Parametro_int                                
                 
                 tau    =  [[g[i][j]/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -817,7 +807,7 @@ class VLE:
                 Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]             
                 
             elif self.model_liq.FormaEq == 2:
-                # Caso tenha o parametro tau 
+                # Caso tenha em mãos o parametro tau 
                 tau    = self.model_liq.Parametro_int                                
             
                 G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -828,7 +818,7 @@ class VLE:
                 Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]  
                 
             elif self.model_liq.FormaEq == 3:
-                # Caso tenha o parametro g do componente puro 
+                # Caso tenha em mãos o parametro g do componente puro 
                 g_ij      = self.model_liq.Parametro_int                                
                 
                 tau    =  [[(g_ij[i][j]-g_ij[j][j])/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -843,7 +833,7 @@ class VLE:
         if self.model_liq.Nome_modelo == 'Wilson':
             
             if self.model_liq.FormaEq == 1:
-            # Caso tenha o parametro LAMBDA. 
+            # Caso tenha em mãos o parametro LAMBDA. 
                 A          =   self.model_liq.Parametro_int
             
                 Coeficiente_Atividade = [exp( -log( sum([x[j]*A[i][j] for j in xrange(self.NC)]) ) + 1.0 - sum([ x[k]*A[k][i]/(sum([x[j]*A[k][j] for j in xrange(self.NC)])) for k in xrange(self.NC) ]) ) for i in xrange(self.NC) ]
@@ -854,6 +844,7 @@ class VLE:
             R  = 83.144621 # em cm3.bar/ K.mol
             
             p_VL = self.model_liq.Parametro
+            # Onde A é o parâmetro p_VL[0][1] e B é o parâmetro p_VL[1][0]
             
             Coeficiente_Atividade_aux   =    [[exp( ( p_VL[i][j]/(R*T) )*( 1+(p_VL[i][j]/p_VL[j][i])*\
             (x[i]/x[j]) )**-2 ) for j in xrange(self.NC) if i!=j] for i in xrange(self.NC)]
@@ -903,10 +894,9 @@ class VLE:
             # Validação grosseira das condições de pressão:
             P_lim = (T/2.0)*sum([y[i]*self.Componente[i].Pc for i in xrange(NC)])/sum([y[i]*self.Componente[i].Tc for i in xrange(NC)])
             if P <= P_lim:
-                self.ValVirial = 'A pressão do sistema é inferior à da validação'
+                warn(u'A pressão do sistema é inferior à da validação')
             else:
-                self.ValVirial = 'Warning: A pressão do sistema é SUPERIOR à da validação - Verificar uso da equacao do VIRIAL'
-
+                warn(u'A pressão do sistema é SUPERIOR à da validação - Verificar uso da equacao do VIRIAL')
         return phi
         
     def PhiSat(self):
@@ -961,7 +951,6 @@ class VLE:
         
         [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.].                 
         ''' 
-
     
         P        = []
         coefAct  = self.Coeficiente_Atividade(self.z,self.Temp)
@@ -1010,7 +999,6 @@ class VLE:
             
             deltaP = abs(P[cont] - P[cont-1])
             cont+=1
-
 
         liquido = Fase(composicao=x,coeffug=None,coefAct = coefAct)
         vapor   = Fase(composicao=self.z,coeffug=coeffug,coefAct = None)
@@ -1075,6 +1063,7 @@ class VLE:
 		coefFugsat = [self.Coeficiente_Fugacidade([y[i]],self.Componente[i].Psat,self.Temp) for i in xrange(2)]
 	
 		# Validação do equilíbrio líquido-vapor
+ 
 		# Líquido
 		Eqliq = [x[i]*coefAct[i]*self.Componente[i].Psat for i in xrange(self.NC)]
 		# Vapor
@@ -1109,4 +1098,3 @@ class VLE:
 	else:
 	    self.wFlash = 'Não é possível executar o Flash'
             self.Flash = None
-
