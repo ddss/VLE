@@ -23,52 +23,64 @@ Referências:
 - SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
 """
 
-from numpy import log, exp, size, mean, abs, zeros
+from numpy import log, exp, size, mean, abs, zeros 
 
-class Fase:
-    '''
-    ==============================================================================
-            Definição:
-    ==============================================================================    
-    Classe para definição das características das fases líquida e vapor.
-    
-    ==============================================================================
-            Entradas:
-    ==============================================================================        
-    *Composição (composicao):
-        Inserido como *list*.
-    *Coeficiente de fugacidade (coeffug):
-        Inserido como *list*.
-    *Coeficiciente de atividade (coefAct):
-        Inserido como *list*.
-    '''
+class Fase:   
     
     def __init__(self,composicao=None,coeffug=None,coefAct = None):
+        '''
+        Algoritmo para caracterização das fases líquida e de vapor.
+        
+        ========
+        Entradas
+        ========
+        
+        * composicao (list): Composição da mistura na fase;
+        * coeffug (list): Os valores dos coeficientes de fugacidade;
+        * coefAct (list): Os valores dos coeficientes de atividade;
+        
+        =========
+        Atributos
+        =========
+        Os atributos desta classe possuem as mesmas propriedades das entradas da classe.
+        
+        * ``comp`` (list): Composição da mistura na fase;
+        * ``coeffug`` (list): Os valores dos coeficientes de fugacidade;
+        * ``coefAct`` (list): Os valores dos coeficientes de atividade;
+        '''
         self.comp      = composicao        
         self.coeffug   = coeffug
         self.coefAct   = coefAct
 
 class Condicao:
-    '''
-    ==============================================================================
-            Definição:
-    ==============================================================================    
-    Classe para identificar as condições termodinâmicas.
     
-    ==============================================================================
-            Entradas:
-    ==============================================================================        
-    *Pressão (P): 
-        Dada em bar e inserido como *float*.
-    *Temperatura (T): 
-        Dada em Kelvin e inserido como *float*.
-    *líquido:
-        Características da fase líquida, acessada pela classe ``Fase``.
-    *vapor:
-        Características da fase de vapor, acessada pela classe ``Fase``.
-    *Beta:
-    '''
     def __init__(self,P,T,liquido,vapor,Beta):
+        '''
+        Rotina que caracteriza as condições do equilíbrio líquido-vapor.
+        
+        ========
+        Entradas
+        ========
+        
+        * P (float): Pressao em bar;
+        * T (float): Temperatura em Kelvin;
+        * liquido: A entrada é um objeto da classe ``Fase`` (Vide documentação da classe) e representa as características da fase líquida;        
+        * vapor: A entrada é um objeto da classe ``Fase`` (Vide documentação da classe) e representa as características da fase de vapor;
+        * Beta (float):
+        
+        =========
+        Atributos
+        =========
+        
+        Os atributos desta classe possuem as mesmas propriedades das entradas da classe.
+        
+        * ``Pressao`` (float): Pressao em bar;
+        * ``Temp`` (float): Temperatura em Kelvin;
+        * ``liquido``: É um objeto da classe ``Fase`` (Vide documentação da classe) e representa as características da fase líquida;
+        * ``vapor``: É um objeto da classe ``Fase`` (Vide documentação da classe) e representa as características da fase de vapor;
+        * ``Beta`` (float):
+        
+        '''
         self.liquido = liquido
         self.vapor   = vapor
         self.Pressao = P
@@ -77,128 +89,361 @@ class Condicao:
 
 class VLE:        
 
-    def __init__(self,Algoritmo,Componentes,z=None,Temp=None,Pressao=None,estgama=None,estphi=None,estBeta = 0.5, tolAlg=1e-10, toleq=1e-4, maxiter=100, model_liq=['UNIQUAC',[None]], model_vap=['VIRIAL',['Hayden_OConnel',None]]):    
+    def __init__(self,Algoritmo,Componentes,model_liq, model_vap,z=None,Temp=None,Pressao=None,estgama=None,estphi=None, estBeta = 0.5, tolAlg=1e-10, toleq=1e-4, maxiter=100, z_coordenacao = 10.0 ):    
         '''
-        ==============================================================================
-        Definição:
-        ==============================================================================    
-        Classe para realizar os cálculos do equilíbrio líquido-vapor, desde o cálculo de
+        ************************
+        Vapor-Liquid Equilibrium
+        ************************        
+        
+        Rotina para realizar os cálculos do equilíbrio líquido-vapor, desde o cálculo de
         coeficiente de atividade aos cálculos de ponto de bolha e de orvalho.
         
-        ==============================================================================
-        Entradas:
-        ==============================================================================        
-        *Algoritmo: O método desejado, vide ``Métodos``. Inserido em forma de *string*;
-        *Componentes:Nomes dos componentes a serem usados. Inserido em forma de uma lista que contém o
-        método ``Componente_Caracterizar`` do ``Thermo_Data_Bank`` para cada um dos componentes.
-        Ex.: Componentes = [TDB.Componente_Caracterizar('Acetone',T),TDB.Componente_Caracterizar('Metanol',T)]
-        Onde TDB é Thermo_Data_Bank
-        *Número de coordenação(z): Número de coordenação, inserido como número. Comumente é um valor inteiro, mas dado em *float*, em geral o valor usado é 10.0 e é um argumento que pode não ser inserido.
-        *Temperatura do sistema (Temp): Dada em kelvin, é inserido como *float* e é um argumento que pode não ser inserido
-        *Estimativa para gamma (estgama): Inserido em forma de *float* e é um argumento que pode não ser inserido.
-        *Estimativa para phi (estphi): Inserido em forma de *float* e e é um argumento que pode não ser inserido.
-        *Estimativa para Beta (estBeta): Inserido em forma de *float* e e é um argumento que pode não ser inserido.
-        *Tolerância do algoritmo (tolAlg):Tolerância desejada para a operação dos métodos, inserido como número.
-        *Tolerância do equilíbrio (toleq): Tolerância desejada para o equilíbrio, inserido como número.
-        *Núemro máximo de iterações (maxiter): Número máximo de iterações desejadas para a operação dos métodos, inserido como número.
-        *Modelo da fase líquida (model_liq): Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
-        e o segundo é uma lista de parâmetros do modelo que são acessados no ``Thermo_Data_Bank``.
-        Ex. model_liq = ['UNIQUAC', [a,z_UNIQUAC]]
-        *Modelo da fase vapor (model_vap): Modelo utilizado para a fase líquida, inserido em forma de lista, onde o primeiro elemento é o nome do modelo
-        e o segundo é uma lista contendo a regra utilizada e os parâmetros do modelo acessados no ``Thermo_Data_Bank``.
-        Ex.: model_vap=['VIRIAL',['Hayden_OConnel',Eta]]
+        ========
+        Entradas
+        ========  
         
-        ==============================================================================
-        Métodos:
-        ==============================================================================        
-        *Second_Virial_Coef:  Calcula o segundo coeficiente Virial.
-        *Coeficiente_Atividade:  Cálculo do coeficiente de atividade.
-        *Coeficiente_Fugacidade: Cálculo do coeficietne de fugacidade.
-        *Flash: Cálculo de flash.
-        *Phisat: Cálculo de phisat (coeficiente de fugacidade nas condições de saturação).
-        *PontoBolha: Cálculo do ponto de bolha.
-        *PontoOrvalho:  Cálculo do ponto de orvalho.
+        *  Algoritmo (str): O nome do cálculo que se deseja fazer. Os algoritmos de cálculo disponíveis são: 'Coeficiente_Atividade', 'Coeficiente_Fugacidade', 'PontoBolha', 'PontoOrvalho' e 'Flash'.
+        
+            * Exemplos da entrada Algoritmo: ::
+                
+                Algoritmo == 'PontoBolha'
+                Algoritmo == 'Coeficiente_Atividade'
+                Algoritmo == 'Flash'   
+                
+        * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
+        
+            * A entrada pode ser dada da seguinte forma: ::
+            
+                Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+                Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
+                
+                Componentes = [Comp1,Comp2]
+                
+        * model_liq (list): É um objeto do grupo de classes de modelos da rotina ``Conexao``. Vide documentação dos modelos presentes nesta rotina. 
+          Os modelos para a fase líquida disponíveis na rotina são: UNIQUAC[1] , NRTL[2], WILSON[3] e Van_Laar[4];
+
+            * Exemplo da entrada model_liq: ::
+            
+                from Conexao import Van_Laar
+                
+                Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+                Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
+                
+                Componentes = [Comp1,Comp2]
+
+                model_liq = Van_Laar(Componentes)
+                
+        * model_vap (list): É um objeto do grupo de classes de modelos da rotina ``Conexao``. Vide documentação dos modelos presentes nesta rotina.
+          Os modelos para a fase de vapor disponíveis na rotina são: VIRIAL[5];
+            
+            * Exemplo da entrada model_vap: ::
+            
+                from Conexao import VIRIAL
+                
+                Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+                Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
+                
+                Componentes = [Comp1,Comp2]
+
+                model_vap = VIRIAL(Componentes,'Tsonopoulos')        
+        
+        * z (list): Composição global da mistura. Onde o primeiro elemento é a composição do componente(1) e o segundo é a composição do componente(2);
+        * Temp (float): Temperatura do sistema dada em kelvin;
+        * estgama (float): Estimativa para o parametro gamma;
+        * estphi (float): Estimativa para o parametro phi;
+        * estBeta (float): Estimativa para o parametro Beta;    
+        * tolAlg (float): Tolerância do algoritmo, a tolerância desejada para a operação dos métodos;
+        * toleq (float): Tolerância do equilíbrio, a tolerância desejada para o equilíbrio;
+        * maxiter (int): Número máximo de iterações desejadas para a operação dos métodos;
+        * z_coordenacao (float): Número de coordenação do componente.
+        
+        
+        ===============
+        Valores padrões
+        ===============
+
+        As seguintes entradas possuem valores padrões.
+        
+            * estphi: Pode ser None;
+            * estgama: Pode ser None;
+            * estBeta = 0.5;
+            * tolAlg = 1e-10;
+            * toleq = 1e-4;
+            * maxiter = 100;
+            * z_coordenacao = 10.0.
+        
+        =========
+        Atributos
+        =========
+        
+        Os atributos dependem do algoritmo de cálculo escolhido. Além dos Métodos que podem ser acessados como atributos, vide documentação dos métodos,
+        os atributos para cada algoritmo de cálculo são:
+        
+        * ``Coeficiente_Atividade``:
+            * ``coefAct`` (list): O atributo gerado representa os coeficientes de atividade dos componentes baseado nas condições de entrada da classe VLE.
+        * ``Coeficiente_Fugacidade``:        
+            * ``coefFug`` (list): O atributo gerado representa os coeficientes de atividade dos componentes baseado nas condições de entrada da classe VLE;
+            * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
+        * ``PontoBolha``:
+            * ``Bolha`` : Objeto da classe ``Condicao``, vide documentação da classe.
+            * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
+            * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
+        * ``PontoOrvalho``:
+            * ``Orvalho`` : Objeto da classe ``Condicao``, vide documentação da classe.
+            * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
+            * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
+        * ``Flash``:
+            * Atributo flash.
+            
+        =======
+        Métodos
+        =======
+        
+        * ``Second_Virial_Coef``:
+            * Método que realiza o cálculo do segundo coeficiente Virial, de acordo com as regras de Hayden O'Connel[6] e Tsonopoulos[7], vide documentação do método.
+        * ``Coeficiente_Atividade``:
+            * Método para cálcular do coeficiente de atividade, vide documentação do método.
+        * ``Coeficiente_Fugacidade``:
+            * Método para cálcular do coeficiente de fugacidade, vide documentação do método.
+        * ``Flash``:
+            * Método para realizar o cálculo de flash, vide documentação do método.
+        * ``Phisat``:
+            Método que realiza o cálculo de phisat (coeficiente de fugacidade nas condições de saturação).
+        * ``PontoBolha``:
+            Método para realizar o cálculo do ponto de bolha.
+        * ``PontoOrvalho``:
+            Método para realizar o cálculo do ponto de orvalho.
+        
+        =========
+        Exemplo 1
+        =========
+        
+        A priori, é necessário utilizar a rotina ``Conexao`` para caracterizar os componentes e os modelos.
+        Neste exemplo, será calculado o ponto de bolha utilizando o método correspondente. A mistura utilizada será Acetona-Metanol, os modelos para as fases líquida e de vapor são, respectivamente
+        UNIQUAC e VIRIAL com a regra de Hayden O'Connel, a temperatura será 330.0 K e a pressão 1.013 bar. ::
+        
+            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            
+            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+                
+            Componentes = [Comp1,Comp2]
+            
+            model_vap = VIRIAL(Componentes)
+            model_liq = UNIQUAC(Componentes,330.0,1)
+            
+            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=395.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            
+        O acesso do valor da pressão do ponto de bolha é da seguinte forma:
+        
+            >>> CalculoBolha.Bolha.Pressao
+        
+        =========
+        Exemplo 2
+        =========
+        
+        Os passos deste exemplo são idênticos aos do Exemplo 1. Neste exemplo, será calculado o ponto de orvalho utilizando o método correspondente.
+        A mistura, as condições da mesma e os modelos são os mesmos do Exemplo 1. ::
+        
+            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            
+            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+                
+            Componentes = [Comp1,Comp2]
+            
+            model_vap = VIRIAL(Componentes)
+            model_liq = UNIQUAC(Componentes,330.0,1)
+            
+            CalculoOrvalho = VLE('PontoOrvalho',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            
+        O acesso do valor da pressão do ponto de orvalho é da seguinte forma:
+        
+            >>> CalculoOrvalho.Orvalho.Pressao
+            
+        =========
+        Exemplo 3
+        =========
+        
+        Os passos deste exemplo são idênticos aos do Exemplo 1. Neste exemplo, serão calculados os coeficientes de atividade utilizando o método correspondente.
+        A mistura, as condições da mesma e os modelos são os mesmos do Exemplo 1. ::
+        
+            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            
+            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+                
+            Componentes = [Comp1,Comp2]
+            
+            model_vap = VIRIAL(Componentes)
+            model_liq = UNIQUAC(Componentes,330.0,1)
+            
+            Calculo_Coef_Atividade = VLE('Coeficiente_Atividade',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            
+        O acesso dos valores dos coeficientes de atividade é da seguinte forma:
+        
+            >>> Calculo_Coef_Atividade.coefAct
+            
+        =========
+        Exemplo 4
+        =========
+        
+        Os passos deste exemplo são idênticos aos do Exemplo 1. Neste exemplo, serão calculados os coeficientes de fugacidade utilizando o método correspondente.
+        A mistura, as condições da mesma e os modelos são os mesmos do Exemplo 1. ::
+        
+            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            
+            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+                
+            Componentes = [Comp1,Comp2]
+            
+            model_vap = VIRIAL(Componentes)
+            model_liq = UNIQUAC(Componentes,330.0,1)
+            
+            Calculo_Coef_Fugacidade = VLE('Coeficiente_Fugacidade',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            
+        O acesso dos valores dos coeficientes de fugacidade é da seguinte forma:
+        
+            >>> Calculo_Coef_Fugacidade.coefFug
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] ABRAMS, D. S.; PRAUSNITZ, J. M. Statistical thermodynamics of liquid
+        mixtures: A new expression for the excess Gibbs energy of partly or completely
+        miscible systems. AIChE Journal, v. 21, n. 1, p. 116–128, jan. 1975. ISSN
+        0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690210115>
+        
+        [2] RENON, H.; PRAUSNITZ, J. M. Local compositions in thermodynamic excess
+        functions for liquid mixtures. AIChE Journal, v. 14, n. 1, p. 135–144, jan. 1968.
+        ISSN 0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690140124>.
+        
+        [3] WILSON, G. M. Vapor-Liquid Equilibrium. XI. A New Expression for the Excess
+        Free Energy of Mixing. Journal of the American Chemical Society, v. 86, n. 2, p.
+        127–130, jan. 1964. ISSN 0002-7863. Disponível em: <http://pubs.acs.org/doi/abs-
+        /10.1021/ja01056a002>
+        
+        [4] VAN LAAR, J. J. The Vapor pressure of binary mixtures. Z. Phys.
+        Chem. 1910, 72, 723−751.        
+        
+        [5] MASON, E. A.; SPURLING, T. H. The Virial Equation of State; The
+        International Encyclopedia of Physical Chemistry and Chemical
+        Physics, Topic 10: The Fluid State, Vol. 2; Pergamon Press: New
+        York, 1969; p 297
+        
+        [6] HAYDEN, J. G.; O’CONNELL, J. P. A Generalized Method for Predicting
+        Second Virial Coefficients. Industrial & Engineering Chemistry Process Design and
+        Development, v. 14, n. 3, p. 209–216, jul. 1975. ISSN 0196-4305.
+        
+        [7] TSONOPOULOS, C.; HEIDMAN, J.L. From the Virial to the cubic equation of state. 
+        Fluid Phase Equilib. 57 (1990) 261–276.
+
         '''
         # Definindo o __init__ de VLE:
-        self.Algoritmo = Algoritmo  # Algoritmo a ser utilizado: Flash, PontoBolha, PontoOrvalho, Coeficiente_Atividade, Coeficiente_Fugacidade
+        Algoritmo = Algoritmo  # Algoritmo a ser utilizado: Flash, PontoBolha, PontoOrvalho, Coeficiente_Atividade, Coeficiente_Fugacidade
         self.NC = size(Componentes) # Número de componentes da mistura
 
         self.Componente = Componentes
 
         # Definição dos modelos termodinâmicos:
-        self.model_liq       = model_liq[0] # Modelo para a fase líquida: UNIQUAC ou NRTL
-        self.model_liq_param = model_liq[1] # Parâmetros para o modelo da fase líquida: UNIQUAC(a,coordnumber), NRTL(t,G)
-        self.model_vap       = model_vap[0] # Modelo para a fase vapor: VIRIAl
-        self.model_vap_param = model_vap[1] # Parâmetros para o modelo da fase vapor: VIRIAL(Hayden_OConnel, Eta)
-
+        self.model_liq       = model_liq  # Modelo para a fase líquida
+        self.model_vap       = model_vap  # Modelo para a fase vapor
+        
         # Condições do VLE
-        self.z       = z       # Composição global
-        self.Pressao = Pressao # Pressão em bar
-        self.Temp    = Temp    # Temperatura em K
+        self.z           = z       # Composição global
+        self.Pressao     = Pressao # Pressão em bar
+        self.Temp        = Temp    # Temperatura em K
         
         # Estimativas iniciais
-        if estgama == None:        
-            self.estgama = [1.0]*len(self.Componente) # estimativa para o coeficiente de atividade
-        else:
-            self.estgama = estgama
+#        if estgama == None:        
+#            self.estgama = [1.0]*len(self.Componente) # estimativa para o coeficiente de atividade
+#        else:
+#            self.estgama = estgama
+#            
+#        self.estBeta = estBeta # estimativa para a fração entre líquido e vapor
+
+        if Algoritmo == 'Flash':
             
-        if estphi == None:
-            self.estphi  = [1.0]*len(self.Componente)  # estimativa para o coeficiente de fugacidade
-        else:
-            self.estphi = estphi
+            self.toleq   = toleq   # Tolerância do equilíbrio
+            self.tolAlg = tolAlg   # Tolerância do algortimo            
+            self.maxiter = maxiter # Número máximo de iterações
             
-        self.estBeta = estBeta # estimativa para a fração entre líquido e vapor
-        
-        # Tolerância
-        self.tolAlg = tolAlg   # Tolerância do algortimo
-        self.toleq   = toleq   # Tolerância do equilíbrio
-        self.maxiter = maxiter # Número máximo de iterações
-
-        # Calcular Métodos gerais:
-        # Cálculo do segundo coeficiente da equação do VIRIAL
-        if self.model_vap == 'VIRIAL':
-            self.Second_Virial_Coef()
-        # Cálculo do coeficiente de fugacidade nas condições de saturação
-        self.PhiSat()
-
-
-        if self.Algoritmo == 'Flash':
             self.Flash()
-        elif self.Algoritmo == 'PontoBolha':
+            
+        elif Algoritmo == 'PontoBolha':
+                            
+            self.tolAlg = tolAlg   # Tolerância do algortimo    
+            self.maxiter = maxiter # Número máximo de iterações
+            self.PhiSat()
+            
+            if estphi == None:
+                self.estphi  = [1.0]*len(self.Componente)  # estimativa para o coeficiente de fugacidade
+            else:
+                self.estphi = estphi
+                
+            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+                self.coordnumber     = z_coordenacao # Número de coordenação do componente               
+            
             self.PontoBolha()
 
-        elif self.Algoritmo == 'PontoOrvalho':
+        elif Algoritmo == 'PontoOrvalho':
+            
+            self.tolAlg = tolAlg   # Tolerância do algortimo                        
+            self.maxiter = maxiter # Número máximo de iterações
+            self.PhiSat()
+            
+            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+                self.coordnumber     = z_coordenacao # Número de coordenação do componente  
+            
             self.PontoOrvalho()   
 
-        elif self.Algoritmo == 'Coeficiente_Atividade':    
-            self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
-
-        elif self.Algoritmo == 'Coeficiente_Fugacidade':
+        elif Algoritmo == 'Coeficiente_Atividade':
+            
+            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+                
+                self.coordnumber     = z_coordenacao # Número de coordenação do componente                            
+                
+                self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
+                
+            else:
+                
+                self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
+                
+        elif Algoritmo == 'Coeficiente_Fugacidade':
+            
             self.coefFug = self.Coeficiente_Fugacidade(self.z,self.Pressao,self.Temp)
 
     def Second_Virial_Coef(self):
         '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o segundo coeficiente da equação Viral.
+        Módulo para calcular o segundo coeficiente da equação Viral de acordo com as regras disponíveis.
+        Estas são: Hayden O'Connel[1] e Tsonopoulos[2].
     
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        Algoritmo sem entradas.
+        ======
+        Saídas
+        ======
         
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Coeficiente B Virial em forma de *list*.
+        * ``B.virial``: Atributo em forma de lista de listas contendo os valores do segundo coeficiente virial dos componentes puros e cruzados.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] HAYDEN, J. G.; O’CONNELL, J. P. A Generalized Method for Predicting
+        Second Virial Coefficients. Industrial & Engineering Chemistry Process Design and
+        Development, v. 14, n. 3, p. 209–216, jul. 1975. ISSN 0196-4305.
+        
+        [2] TSONOPOULOS, C.; HEIDMAN, J.L. From the Virial to the cubic equation of state. 
+        Fluid Phase Equilib. 57 (1990) 261–276.
+        
+        
         '''
-        parametros  = self.model_vap_param
-        T           = self.Temp
-        Componente  = self.Componente
-        NC          = self.NC
-
-        if parametros[0] == 'Hayden_OConnel':
+            
+        if self.model_vap.regra_mistura == 'Hayden_o_Connel':
+            
+            R = 83.144621 # em cm3.bar/ K.mol
+                    
             # T     = Temperatura / K
             # ek    = energia característica da interação i-j, K
             # sigma = tamanho molecular , A
@@ -206,31 +451,31 @@ class VLE:
             # Eta   = Parâmetro de associação (i=j), parâmetro de solvatação (i != j)
             # w     = Fator acêntrico não polar
             
-            Eta = parametros[1]
+            Eta = self.model_vap.coef_solv
 
             # -----------------------------------------------------------------------------------------------------------------------------------------------------------
             # Parâmetros independentes da temperatura:
          
-            ek     = [[0.0 for j in xrange(NC)] for i in xrange(NC)]
-            sigma  = [[0.0 for j in xrange(NC)] for i in xrange(NC)]
-            w      = [[0.0 for j in xrange(NC)] for i in xrange(NC)]
-            ekl    = [[0.0 for j in xrange(NC)] for i in xrange(NC)]
-            sigmal = [[0.0 for j in xrange(NC)] for i in xrange(NC)]
+            ek     = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            sigma  = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            w      = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            ekl    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            sigmal = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
           
             # Parâmetros Puros
-            for i in xrange(NC):
-                for j in xrange(NC):
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
                     if i == j:
-                        w[i][j]      = 0.006026*Componente[i].radius_giration + 0.02096*(Componente[i].radius_giration**2.0) - 0.001366*(Componente[i].radius_giration**3.0)
-                        sigmal[i][j] = (2.4507 - w[i][j])*(1.0133*Componente[i].Tc/Componente[i].Pc)**(1.0/3.0)
-                        ekl[i][j]    = Componente[i].Tc*(0.748 + 0.91*w[i][j] - 0.4*Eta[i][j]/(2.0+20.0*w[i][j]))
+                        w[i][j]      = 0.006026*self.Componente[i].radius_giration + 0.02096*(self.Componente[i].radius_giration**2.0) - 0.001366*(self.Componente[i].radius_giration**3.0)
+                        sigmal[i][j] = (2.4507 - w[i][j])*(1.0133*self.Componente[i].Tc/self.Componente[i].Pc)**(1.0/3.0)
+                        ekl[i][j]    = self.Componente[i].Tc*(0.748 + 0.91*w[i][j] - 0.4*Eta[i][j]/(2.0+20.0*w[i][j]))
                        
-                        if Componente[i].dipole_moment < 1.45:
+                        if self.Componente[i].dipole_moment < 1.45:
                             Xi = 0.0
                         else:
                             den1 = 2.882 - 1.882*w[i][j]/(0.03 + w[i][j])
-                            den2 = Componente[i].Tc*(sigmal[i][j]**6.0)*ekl[i][j]
-                            Xi   = (1.7941*10**7.0)*(Componente[i].dipole_moment**4.0)/(den1*den2)
+                            den2 = self.Componente[i].Tc*(sigmal[i][j]**6.0)*ekl[i][j]
+                            Xi   = (1.7941*10**7.0)*(self.Componente[i].dipole_moment**4.0)/(den1*den2)
                           
                         c1 = (16.0+400.0*w[i][j])/(10.0+400.0*w[i][j])
                         c2 = 3.0/(10.0 + 400.0*w[i][j])
@@ -239,17 +484,17 @@ class VLE:
                         sigma[i][j]  = sigmal[i][j]*(1+Xi*c2)**(1.0/3.0) 
             
             # Parâmetros cruzados
-            for i in xrange(NC):
-                for j in xrange(NC):
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
                     if i != j:
                         w[i][j]      = (0.5)*(w[i][i]+w[j][j])
                         sigmal[i][j] = (sigma[i][i]*sigma[j][j])**0.5
                         ekl[i][j]    = 0.7*((ek[i][i]*ek[j][j])**0.5) + 0.6/(1.0/ek[i][i] + 1.0/ek[j][j])
                             
-                        if Componente[i].dipole_moment >= 2.0 and Componente[j].dipole_moment == 0.0:
-                            Xil = (Componente[i].dipole_moment**2.0) * ek[j][j]**(2.0/3.0) * (sigma[j][j]**4.0) / (ekl[i][j]*sigmal[i][j]**6.0)
-                        elif Componente[j].dipole_moment >= 2.0 and Componente[i].dipole_moment == 0.0:
-                            Xil = (Componente[j].dipole_moment**2.0) * ek[i][i]**(2.0/3.0) * (sigma[i][i]**4.0) / (ekl[i][j]*sigmal[i][j]**6.0)
+                        if self.Componente[i].dipole_moment >= 2.0 and self.Componente[j].dipole_moment == 0.0:
+                            Xil = (self.Componente[i].dipole_moment**2.0) * ek[j][j]**(2.0/3.0) * (sigma[j][j]**4.0) / (ekl[i][j]*sigmal[i][j]**6.0)
+                        elif self.Componente[j].dipole_moment >= 2.0 and self.Componente[i].dipole_moment == 0.0:
+                            Xil = (self.Componente[j].dipole_moment**2.0) * ek[i][i]**(2.0/3.0) * (sigma[i][i]**4.0) / (ekl[i][j]*sigmal[i][j]**6.0)
                         else:
                             Xil = 0.0
                          
@@ -259,13 +504,13 @@ class VLE:
                         ek[i][j]     = ekl[i][j]*(1.0+Xil*c1l)                            
                         sigma[i][j]  = sigmal[i][j]*(1.0-Xil*c2l)**(1.0/3.0)
                       
-            mi_ast = [[7243.8*self.Componente[i].dipole_moment*Componente[j].dipole_moment/(ek[i][j]*(sigma[i][j]**3.0)) for j in xrange(NC)] for i in xrange(NC)]
+            mi_ast = [[7243.8*self.Componente[i].dipole_moment*self.Componente[j].dipole_moment/(ek[i][j]*(sigma[i][j]**3.0)) for j in xrange(self.NC)] for i in xrange(self.NC)]
           
-            b0 = [[1.26184*(sigma[i][j]**3.0) for j in xrange(NC)] for i in xrange(NC)]
+            b0 = [[1.26184*(sigma[i][j]**3.0) for j in xrange(self.NC)] for i in xrange(self.NC)]
          
-            mi_astl = [[0.0 for j in xrange(NC)] for i in xrange(NC)] 
-            for i in xrange(NC):
-                for j in xrange(NC):
+            mi_astl = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)] 
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
                     if mi_ast[i][j] < 0.04:
                         mi_astl[i][j] = mi_ast[i][j]
                     elif mi_ast[i][j] < 0.25 and mi_ast[i][j] >= 0.04:
@@ -273,12 +518,12 @@ class VLE:
                     elif mi_ast[i][j] >= 0.25:
                         mi_astl[i][j] = mi_ast[i][j] - 0.25
           
-            A      = [[-0.3 - 0.05*mi_ast[i][j]        for j in xrange(NC)] for i in xrange(NC)]         
-            deltah = [[1.99 + 0.20*(mi_ast[i][j]**2.0) for j in xrange(NC)] for i in xrange(NC)]
+            A      = [[-0.3 - 0.05*mi_ast[i][j]        for j in xrange(self.NC)] for i in xrange(self.NC)]         
+            deltah = [[1.99 + 0.20*(mi_ast[i][j]**2.0) for j in xrange(self.NC)] for i in xrange(self.NC)]
                  
-            E = [[0.0 for j in xrange(NC)] for i in xrange(NC)] 
-            for i in xrange(NC):
-                for j in xrange(NC):
+            E = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)] 
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
                     if Eta[i][j] < 4.5:
                         E[i][j] = exp(Eta[i][j]*(650.0/(ek[i][j]+300.0) - 4.27))
                     elif Eta[i][j] >= 4.5:
@@ -286,171 +531,370 @@ class VLE:
                   
             # -----------------------------------------------------------------------------------------------------------------------------------------------------------            
             # Parâmetros dependentes da temperatura:
-            T_ast   = [[T/ek[i][j]                  for j in xrange(NC)] for i in xrange(NC)]
-            T_astll = [[1/T_ast[i][j] - 1.6*w[i][j] for j in xrange(NC)] for i in xrange(NC)]
+            T_ast   = [[self.Temp/ek[i][j]                  for j in xrange(self.NC)] for i in xrange(self.NC)]
+            T_astll = [[1/T_ast[i][j] - 1.6*w[i][j] for j in xrange(self.NC)] for i in xrange(self.NC)]
             
             #Cálculos dos BF's:
-            BFnonpolar = [[ b0[i][j]*(0.94 - 1.47*T_astll[i][j] - 0.85*(T_astll[i][j]**2.0) + 1.015*(T_astll[i][j]**3.0))           for j in xrange(NC)] for i in xrange(NC)]
-            BFpolar    = [[-b0[i][j]*mi_astl[i][j]*(0.74 - 3.0*T_astll[i][j] + 2.1*(T_astll[i][j]**2.0) + 2.1*(T_astll[i][j]**3.0)) for j in xrange(NC)] for i in xrange(NC)]
+            BFnonpolar = [[ b0[i][j]*(0.94 - 1.47*T_astll[i][j] - 0.85*(T_astll[i][j]**2.0) + 1.015*(T_astll[i][j]**3.0))           for j in xrange(self.NC)] for i in xrange(self.NC)]
+            BFpolar    = [[-b0[i][j]*mi_astl[i][j]*(0.74 - 3.0*T_astll[i][j] + 2.1*(T_astll[i][j]**2.0) + 2.1*(T_astll[i][j]**3.0)) for j in xrange(self.NC)] for i in xrange(self.NC)]
          
             # Cálculos para BD:
-            Bmetastable_Bbound = [[b0[i][j]*A[i][j]*exp(deltah[i][j]/T_ast[i][j]) for j in xrange(NC)] for i in xrange(NC)]
-            Bchemical          = [[b0[i][j]*E[i][j]*(1 - exp(1500.0*Eta[i][j]/T)) for j in xrange(NC)] for i in xrange(NC)]
+            Bmetastable_Bbound = [[b0[i][j]*A[i][j]*exp(deltah[i][j]/T_ast[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
+            Bchemical          = [[b0[i][j]*E[i][j]*(1 - exp(1500.0*Eta[i][j]/self.Temp)) for j in xrange(self.NC)] for i in xrange(self.NC)]
             # -----------------------------------------------------------------------------------------------------------------------------------------------------------
          
-            BD            = [[Bmetastable_Bbound[i][j] + Bchemical[i][j] for j in xrange(NC)] for i in xrange(NC)] # D bound or dimerizes molecules (Chemical forces)
-            BF            = [[BFnonpolar[i][j]         + BFpolar[i][j]   for j in xrange(NC)] for i in xrange(NC)] # Free molecules
-            self.Bvirial  = [[BF[i][j]                 + BD[i][j]        for j in xrange(NC)] for i in xrange(NC)]
+            BD            = [[Bmetastable_Bbound[i][j] + Bchemical[i][j] for j in xrange(self.NC)] for i in xrange(self.NC)] # D bound or dimerizes molecules (Chemical forces)
+            BF            = [[BFnonpolar[i][j]         + BFpolar[i][j]   for j in xrange(self.NC)] for i in xrange(self.NC)] # Free molecules
+            self.Bvirial  = [[BF[i][j]                 + BD[i][j]        for j in xrange(self.NC)] for i in xrange(self.NC)]
+            
+        elif self.model_vap.regra_mistura == 'Tsonopoulos' :
+            
+            R = 82.05746 # cm3.atm.K−1.mol−1            
+            
+            # Caracteristica da mistura quanto à polaridade. Ex.: mistura Polar-Polar.
+            Caracteristica_mistura = self.Componente[0].polaridade + '-' +self.Componente[1].polaridade
+                 
+            w               = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+                
+            Tc              = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            Tr              = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            Pc              = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)] 
+            Vc              = [0.0 for j in xrange(self.NC)]
+                
+            mi              = [0.0 for j in xrange(self.NC)]
+            mi_reduzido     = [0.0 for j in xrange(self.NC)]
+                
+            parametro_a     = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            parametro_b     = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)] 
+                
+            # Funções da corelação de Tsonopoulos. Todas em função de Tr.
+                
+            parametro_f0    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            parametro_f1    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            parametro_f2    = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+                 
+            #k_interacao     = [[0.0 for j in xrange(NC)] for i in xrange(NC)] 
+                 
+            k_int_binaria   = self.model_vap.k_int_binaria
+            
+            # PARÂMETROS PUROS
+        
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    
+                    if i == j:  
+              
+                        Tc[i][j]       = self.Componente[j].Tc           
+                        Pc[i][j]       = self.Componente[j].Pc / 1.01325  # Deve ser em atm
+                        w[i][j]        = self.Componente[j].w
+                        Vc[j]          = self.Componente[j].Vc                
+                        mi[j]          = self.Componente[j].dipole_moment    
+                        
+                        mi_reduzido[j] = (10**5)*(mi[j]**2)*Pc[i][j]/(Tc[i][j])**2
+                        Tr[i][j]       = self.Temp/Tc[i][j]
+                        
+            # PARÂMETROS DE ASSOCIAÇÃO
+            
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    
+                    if self.Componente[j].Grupo_funcional in ['Ketone','Aldehyde','Alkyl Nitrile','Ether',' Carboxylic Acid Ester']:
+                        
+                        if i == j:
+                            
+                            parametro_a[i][j]        = -2.14e-4*mi_reduzido[j]-4.308e-21*(mi_reduzido[j])**8
+                            parametro_b[i][j]        = 0     
+                            
+                    elif self.Componente[j].Grupo_funcional in ['Alkyl Halide', 'Mercaptan','Sulfide', 'Disulfides']:
+                        
+                        if i == j:
+                            
+                            parametro_a[i][j]        = -2.188e-11*(mi_reduzido[j])**4 - 7.831e-21*(mi_reduzido[j])**8
+                            parametro_b[i][j]        = 0     
+                
+                    elif self.Componente[j].Grupo_funcional == 'Alcool':
+                        if self.Componente[j].Nome != 'Methanol':
+                            if i == j:
+                                
+                                parametro_a[i][j]    =  0.0878
+                                parametro_b[i][j]    =  0.00908 + 0.0006957*mi_reduzido[j]
+                        
+                    elif self.Componente[j].Nome == 'Methanol':
+                        
+                        if i == j:
+                            
+                            parametro_a[i][j]        = 0.0878
+                            parametro_b[i][j]        = 0.0525
+                    
+                    elif self.Componente[j].Nome == 'Water':
+                        
+                        if i == j:
+                            
+                            parametro_a[i][j]        = -0.0109
+                            parametro_b[i][j]        = 0.0
+
+                    else:
+                        
+                        if i == j:
+                            
+                            parametro_a[i][j]        = 0.0
+                            parametro_b[i][j]        = 0.0
+
+            # PARÂMETROS DE MISTURA
+            
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    
+                    if Caracteristica_mistura == 'Polar-Polar':
+                        
+                        if i!=j:
+                            
+                            parametro_a[i][j]  = 0.5*(parametro_a[i][i]+parametro_a[j][j])
+                            parametro_b[i][j]  = 0.5*(parametro_b[i][i]+parametro_b[j][j])
+                
+                            w[i][j]            = 0.5*(w[i][i]+w[j][j])
+                            
+                            Tc[i][j]           = (Tc[i][i]*Tc[j][j])**0.5*(1-k_int_binaria[i][j])
+                            Tr[i][j]           = self.Temp/Tc[i][j]
+                            
+                            Pc[i][j]           = 4*( Tc[i][j]*(Pc[i][i]*Vc[i]/Tc[i][i] + Pc[j][j]*Vc[j]/Tc[j][j])/((Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0))**3) )
+                    
+                    elif Caracteristica_mistura == 'Apolar-Apolar': 
+                        
+                        if i!=j:
+                            
+                            parametro_a[i][j]  = 0.0
+                            parametro_b[i][j]  = 0.0
+                            
+                            k_int_binaria[i][j]= 1 - ( (2*(Vc[i]*Vc[j])**1.0/6.0)/(Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0))  )**3
+                            
+                            w[i][j]            = 0.5*(w[i][i]+w[j][j])
+                            
+                            Tc[i][j]           = (Tc[i][i]*Tc[j][j])**0.5*(1-k_int_binaria[i][j])
+                            Tr[i][j]           = self.Temp/Tc[i][j]
+                            Pc[i][j]           = 4*( Tc[i][j]*(Pc[i][i]*Vc[i]/Tc[i][i] + Pc[j][j]*Vc[j]/Tc[j][j])/(Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0) )**3 )
+        
+                    elif Caracteristica_mistura in ['Apolar-Polar','Polar-Apolar']: 
+                        
+                        if i!=j:
+                            
+                            parametro_a[i][j]  = 0.0
+                            parametro_b[i][j]  = 0.0
+                            
+                            w[i][j]            = 0.5*(w[i][i]+w[j][j])
+                            
+                            Tc[i][j]           = (Tc[i][i]*Tc[j][j])**0.5*(1-k_int_binaria[i][j])
+                            Tr[i][j]           = self.Temp/Tc[i][j]
+                            Pc[i][j]           = 4*( Tc[i][j]*(Pc[i][i]*Vc[i]/Tc[i][i] + Pc[j][j]*Vc[j]/Tc[j][j])/( Vc[i]**(1.0/3.0) + Vc[j]**(1.0/3.0) ) ** 3.0 )
+ 
+       
+            # PARAMETROS CÁLCULO Bij
+                   
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    
+                    parametro_f0[i][j]    = 0.1445 - 0.330/Tr[i][j] - 0.1385/(Tr[i][j])**2 - 0.0121/(Tr[i][j])**3 - 0.000607/(Tr[i][j])**8
+             
+                    parametro_f1[i][j]    = 0.0637 + 0.331/(Tr[i][j])**2 - 0.423/(Tr[i][j])**3 - 0.008/(Tr[i][j])**8
+                    
+                    parametro_f2[i][j]    = parametro_a[i][j]/(Tr[i][j])**6 - parametro_b[i][j]/(Tr[i][j])**8
+            
+            # CÁLCULO DO Bij
+            
+            self.Bvirial = [[ (Tc[i][j]*R/Pc[i][j])*(parametro_f0[i][j] + w[i][j]*parametro_f1[i][j] + parametro_f2[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
+
+
 
     def Coeficiente_Atividade(self,x,T):
         '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o coeficiente de atividade (gamma).
-    
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        *Composições dos componentes da fase líquida (x):
-            Inserido como *list*.
-        *Temperatura (T):
-            Dada em Kelvin e inserido como *float*
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Coeficiente de atividade em forma de *list*, onde o primeiro elemento é o coeficiente
-        de atividade para o primeiro componente da lista ``Componentes``, inserida em VLE. E o
-        segundo elemento é o coeficiente de atividade para o segundo componente da mesma lista.
+        Módulo para calcular o coeficiente de atividade de acordo com os modelos disponíveis.
+        Estes são: UNIQUAC[1] , NRTL[2], Wilson[3] e Van Laar[4].
+        
+        ========
+        Entradas
+        ========
+        
+        * x (list): Composições dos componentes da fase líquida;
+        * T (float): Temperatura em Kelvin;
+        
+        ======
+        Saídas
+        ======
+        
+        * O método retorna os valores dos coeficientes de atividade dos componentes em forma de lista.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] ABRAMS, D. S.; PRAUSNITZ, J. M. Statistical thermodynamics of liquid
+        mixtures: A new expression for the excess Gibbs energy of partly or completely
+        miscible systems. AIChE Journal, v. 21, n. 1, p. 116–128, jan. 1975. ISSN
+        0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690210115>
+        
+        [2] RENON, H.; PRAUSNITZ, J. M. Local compositions in thermodynamic excess
+        functions for liquid mixtures. AIChE Journal, v. 14, n. 1, p. 135–144, jan. 1968.
+        ISSN 0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690140124>.
+        
+        [3] WILSON, G. M. Vapor-Liquid Equilibrium. XI. A New Expression for the Excess
+        Free Energy of Mixing. Journal of the American Chemical Society, v. 86, n. 2, p.
+        127–130, jan. 1964. ISSN 0002-7863. Disponível em: <http://pubs.acs.org/doi/abs-
+        /10.1021/ja01056a002>
+        
+        [4] VAN LAAR, J. J. The Vapor pressure of binary mixtures. Z. Phys.
+        Chem. 1910, 72, 723−751.  
+                
         '''                        
         # Modelo UNIQUAC
-        if self.model_liq == 'UNIQUAC':
-            self.a           = self.model_liq_param[0]
-            self.coordnumber = self.model_liq_param[1]
-            #print 'COORD',self.coordnumber
+        if self.model_liq.Nome_modelo == 'UNIQUAC':
+            
+            if self.model_liq.FormaEq == 1:
+                # Caso tenha a diferenca do parametro a. A FormaEq 1 é a mais recorrente.
+                a     = self.model_liq.Parametro_int
+    
+                tau   = [[exp(-a[i][j]/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                tetal = [self.Componente[i].ql * x[i] / sum([self.Componente[j].ql * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                l     = [(self.coordnumber/2.0)*(self.Componente[i].r - self.Componente[i].q) - (self.Componente[i].r - 1)  for i in xrange(self.NC)]
+    
+                A     = [self.Componente[i].ql*sum([tetal[j]*tau[i][j]/sum([tetal[k]*tau[k][j] for k in xrange(self.NC)]) for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                
+                Combinatorial = [log(phi[i]/x[i]) + (self.coordnumber/2.0)*self.Componente[i].q*log(teta[i]/phi[i]) + l[i] - (phi[i]/x[i]) * sum([x[j]*l[j] for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                Residual      = [-self.Componente[i].ql*log(sum([tetal[j]*tau[j][i] for j in xrange(self.NC)])) + self.Componente[i].ql - A[i]      for i in xrange(self.NC)] 
+    
+                Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
+                
+            elif self.model_liq.FormaEq == 2:
+                # Caso tenha o parametro tau 
+                tau     = self.model_liq.Parametro_int
+    
+                phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                tetal = [self.Componente[i].ql * x[i] / sum([self.Componente[j].ql * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                l     = [(self.coordnumber/2.0)*(self.Componente[i].r - self.Componente[i].q) - (self.Componente[i].r - 1)  for i in xrange(self.NC)]
+    
+                A     = [self.Componente[i].ql*sum([tetal[j]*tau[i][j]/sum([tetal[k]*tau[k][j] for k in xrange(self.NC)]) for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                
+                Combinatorial = [log(phi[i]/x[i]) + (self.coordnumber/2.0)*self.Componente[i].q*log(teta[i]/phi[i]) + l[i] - (phi[i]/x[i]) * sum([x[j]*l[j] for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                Residual      = [-self.Componente[i].ql*log(sum([tetal[j]*tau[j][i] for j in xrange(self.NC)])) + self.Componente[i].ql - A[i]      for i in xrange(self.NC)] 
+    
+                Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
 
-            tau   = [[exp(-self.a[i][j]/T) for j in xrange(2)] for i in xrange(2)]
-            #print 'a',self.a,'\n'
-            #print 'tau',tau,'\n'
-            phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
-            teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
-            tetal = [self.Componente[i].ql * x[i] / sum([self.Componente[j].ql * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
-            l     = [(self.coordnumber/2.0)*(self.Componente[i].r - self.Componente[i].q) - (self.Componente[i].r - 1)  for i in xrange(self.NC)]
-             
-            #print 'phi',phi,'\n'
-            #print 'teta',teta, '\n'
-            #print 'tetal',tetal,'\n'
-            #print  'l',l,'\n'
-
-            A = [self.Componente[i].ql*sum([tetal[j]*tau[i][j]/sum([tetal[k]*tau[k][j] for k in xrange(self.NC)]) for j in xrange(self.NC)]) for i in xrange(self.NC)]
-        
-            #print 'A', A, '\n'
-            Combinatorial = [log(phi[i]/x[i]) + (self.coordnumber/2.0)*self.Componente[i].q*log(teta[i]/phi[i]) + l[i] - (phi[i]/x[i]) * sum([x[j]*l[j] for j in xrange(self.NC)]) for i in xrange(self.NC)]
-            Residual      = [-self.Componente[i].ql*log(sum([tetal[j]*tau[j][i] for j in xrange(self.NC)])) + self.Componente[i].ql - A[i]      for i in xrange(self.NC)] 
-            #print 'Comb',Combinatorial,'\n'
-            #print 'Res',Residual,'\n'
-
-            Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
-        
+            elif self.model_liq.FormaEq == 3:
+                # Caso tenha o parametro a do componente puro
+                a_ij  = self.model_liq.Parametro_int
+    
+                tau   = [[exp(-(a_ij[i][j]-a_ij[j][j])/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                tetal = [self.Componente[i].ql * x[i] / sum([self.Componente[j].ql * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                l     = [(self.coordnumber/2.0)*(self.Componente[i].r - self.Componente[i].q) - (self.Componente[i].r - 1)  for i in xrange(self.NC)]
+    
+                A     = [self.Componente[i].ql*sum([tetal[j]*tau[i][j]/sum([tetal[k]*tau[k][j] for k in xrange(self.NC)]) for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                
+                Combinatorial = [log(phi[i]/x[i]) + (self.coordnumber/2.0)*self.Componente[i].q*log(teta[i]/phi[i]) + l[i] - (phi[i]/x[i]) * sum([x[j]*l[j] for j in xrange(self.NC)]) for i in xrange(self.NC)]
+                Residual      = [-self.Componente[i].ql*log(sum([tetal[j]*tau[j][i] for j in xrange(self.NC)])) + self.Componente[i].ql - A[i]      for i in xrange(self.NC)] 
+    
+                Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]                
+                
         # Modelo NRTL
-        if self.model_liq == 'NRTL':
-            R = 83.144621            
-            self.g           = self.model_liq_param[0]            
-            self.alpha       = self.model_liq_param[1]                      
+        if self.model_liq.Nome_modelo == 'NRTL':
             
-            tau    =  [[self.g[i][j]/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
-            G  = [[exp(-self.alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
-
-            Coeficiente_Atividade = []
-            # Cálculo do coeficiente de atividade
-
-            for i in xrange(self.NC):
+            R = 83.144621# em cm3.bar/ K.mol
+            alpha       = self.model_liq.alpha            
+            
+            if self.model_liq.FormaEq == 1:
+                # Caso tenha a diferenca do parametro g. A FormaEq 1 é a mais recorrente.
+                g      = self.model_liq.Parametro_int                                
+                
+                tau    =  [[g[i][j]/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
     
-                soma1 = 0
-                for j in xrange(self.NC):
-                    soma1 = tau[j][i]*G[j][i]*x[j] + soma1
+                parte1 = [(sum([tau[j][i]*G[j][i]*x[j] for j in xrange(self.NC)]))/(sum([G[k][i]*x[k] for k in xrange(self.NC)])) for i in xrange(self.NC)]
+                parte2 = [sum( [( x[j]*G[i][j]/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )*(tau[i][j] -sum([x[k]*tau[k][j]*G[k][j] for k in xrange(self.NC)])/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )   for j in xrange(self.NC)] ) for i in xrange(self.NC)]
     
-                soma2 = 0
-                for k in xrange(self.NC):
-                    soma2 = G[k][i]*x[k] + soma2
-        
-                soma5 = 0          
-                for j in xrange(self.NC):
-                    soma3 = 0
-                    soma4 = 0
-                    for k in xrange(self.NC):
-                        soma3 = G[k][j]*x[k] + soma3
-                        soma4 = x[k]*tau[k][j]*G[k][j]+soma4
-                    soma5 = ( (x[j]*G[i][j])/soma3 )*( tau[i][j]-(soma4/soma3) ) + soma5
+                Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]             
+                
+            elif self.model_liq.FormaEq == 2:
+                # Caso tenha o parametro tau 
+                tau    = self.model_liq.Parametro_int                                
+            
+                G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                
+                parte1 = [(sum([tau[j][i]*G[j][i]*x[j] for j in xrange(self.NC)]))/(sum([G[k][i]*x[k] for k in xrange(self.NC)])) for i in xrange(self.NC)]
+                parte2 = [sum( [( x[j]*G[i][j]/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )*(tau[i][j] -sum([x[k]*tau[k][j]*G[k][j] for k in xrange(self.NC)])/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )   for j in xrange(self.NC)] ) for i in xrange(self.NC)]
+    
+                Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]  
+                
+            elif self.model_liq.FormaEq == 3:
+                # Caso tenha o parametro g do componente puro 
+                g_ij      = self.model_liq.Parametro_int                                
+                
+                tau    =  [[(g_ij[i][j]-g_ij[j][j])/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
                     
-                Coeficiente_Atividade_aux = exp( soma1/soma2 + soma5 ) # |Eq.3| Equação do modelo NRTL para multicomponentes
-                Coeficiente_Atividade.append(Coeficiente_Atividade_aux)
-                
-                
-       # Modelo Van Laar
-        if self.model_liq == 'Van_Laar':
-            R = 83.144621                        
-            self.A_VL       =   self.model_liq_param[0]
-            self.B_VL       =   self.model_liq_param[1]
-            
-            self.p_VL = [self.A_VL,self.B_VL]          
-            
-            Coeficiente_Atividade_aux   =    [[exp( ( self.p_VL[i]/(R*T) )*( 1+(self.p_VL[i]/self.p_VL[j])*\
-            (x[i]/x[j]) )**-2 ) for j in xrange(self.NC) if i!=j] for i in xrange(self.NC)]
-            
-            Coeficiente_Atividade       =    [Coeficiente_Atividade_aux[0][0],Coeficiente_Atividade_aux[1][0]]
-        
-        # Modelo de Wilson                      
-        if self.model_liq == 'Wilson':
-            self.A          =   self.model_liq_param[0]
-            
-            Coeficiente_Atividade = []
-
-            for k in xrange(self.NC):
+                parte1 = [(sum([tau[j][i]*G[j][i]*x[j] for j in xrange(self.NC)]))/(sum([G[k][i]*x[k] for k in xrange(self.NC)])) for i in xrange(self.NC)]
+                parte2 = [sum( [( x[j]*G[i][j]/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )*(tau[i][j] -sum([x[k]*tau[k][j]*G[k][j] for k in xrange(self.NC)])/sum([G[k][j]*x[k] for k in xrange(self.NC)]) )   for j in xrange(self.NC)] ) for i in xrange(self.NC)]
     
-                soma1 = 0
-                for j in xrange(self.NC):
-                    soma1 = self.A[k][j]*x[j] + soma1
-        
-                soma2 = 0          
-                for i in xrange(self.NC):
-                    soma3 = 0
-                    for j in xrange(self.NC):
-                        soma3 = self.A[i][j]*x[j] + soma3
-                    soma2 = (x[i]*self.A[i][k])/soma3 + soma2
-        
-                Coeficiente_Atividade_aux = exp( -log(soma1)+1-soma2 ) # |Eq.2| Equação do modelo NRTL para multicomponentes
-                Coeficiente_Atividade.append(Coeficiente_Atividade_aux)
+                Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]
+                
+        # Modelo de Wilson                      
+        if self.model_liq.Nome_modelo == 'Wilson':
+            
+            if self.model_liq.FormaEq == 1:
+            # Caso tenha o parametro LAMBDA. 
+                A          =   self.model_liq.Parametro_int
+            
+                Coeficiente_Atividade = [exp( -log( sum([x[j]*A[i][j] for j in xrange(self.NC)]) ) + 1.0 - sum([ x[k]*A[k][i]/(sum([x[j]*A[k][j] for j in xrange(self.NC)])) for k in xrange(self.NC) ]) ) for i in xrange(self.NC) ]
+               
+       # Modelo Van Laar
+        if self.model_liq.Nome_modelo == 'Van Laar':
+            
+            R  = 83.144621 # em cm3.bar/ K.mol
+            
+            p_VL = self.model_liq.Parametro
+            
+            Coeficiente_Atividade_aux   =    [[exp( ( p_VL[i][j]/(R*T) )*( 1+(p_VL[i][j]/p_VL[j][i])*\
+            (x[i]/x[j]) )**-2 ) for j in xrange(self.NC) if i!=j] for i in xrange(self.NC)]
+                        
+            Coeficiente_Atividade       =    [Coeficiente_Atividade_aux[0][0],Coeficiente_Atividade_aux[1][0]]
                 
         return Coeficiente_Atividade
 
     def Coeficiente_Fugacidade(self,y,P,T):
         '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o coeficiente de fugacidade (phi).
+        Módulo para calcular o coeficiente de fugacidade de acordo com as equações de estado disponíveis.
+        Estas são: Virial[1].
     
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        *Composições dos componentes da fase de vapor (y):
-            Inserido como *list*.
-        *Temperatura (T):
-            Dada em Kelvin e inserido como *float*
-        *Pressão do sistema (P):
-            Dada em bar e inserido como *float*.
+        ========
+        Entradas
+        ========
         
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Coeficiente de fugacidade em forma de *list*, onde o primeiro elemento é o coeficiente
-        de fugacidade para o primeiro componente da lista ``Componentes``, inserida em VLE. E o
-        segundo elemento é o coeficiente de fugacidade para o segundo componente da mesma lista.
+        * y (list): Composições dos componentes da fase de vapor.
+        * T (float): Temperatura em Kelvin.
+        * P (float): Pressão do sistema em bar.
+        
+        ======
+        Saídas
+        ======
+        
+        * O método retorna os valores dos coeficientes de fugacidade dos componentes em forma de lista.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] MASON, E. A.; SPURLING, T. H. The Virial Equation of State; The
+        International Encyclopedia of Physical Chemistry and Chemical
+        Physics, Topic 10: The Fluid State, Vol. 2; Pergamon Press: New
+        York, 1969; p 297
+        
         '''   
-        if self.model_vap == 'VIRIAL':
+        R = 83.144621 # em cm3.bar/ K.mol
+        if self.model_vap.Nome_modelo == 'Virial':
             NC = size(y)
-            R = 83.144621 # cm3.bar/(K.mol)
+            self.Second_Virial_Coef()
             B = self.Bvirial
             Bmixture = sum([sum([y[i]*y[j]*B[i][j] for j in xrange(NC)])      for i in xrange(NC)])
             A        = [ 2*sum([y[j]*B[i][j] for j in xrange(NC)]) - Bmixture for i in xrange(NC)]
@@ -464,22 +908,123 @@ class VLE:
                 self.ValVirial = 'Warning: A pressão do sistema é SUPERIOR à da validação - Verificar uso da equacao do VIRIAL'
 
         return phi
+        
+    def PhiSat(self):
+        '''
+        Módulo para calcular o coeficiente de fugacidade nas condições de saturação segundo [1] e [2].
+        
+        ======
+        Saídas
+        ======
+        
+        * O método retorna os valores dos coeficientes de fugacidade dos componentes em forma de lista.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+        
+        [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
+        
+        ''' 
+        # Cálculo de phisat (coeficiente de fugacidade nas condições de saturação)
+        # Utilizado o mesmo modelo de phi, quando x->1.
+        phisat = []
+        for i in xrange(self.NC):
+            comp    = zeros((1,self.NC)) + 0.00000001
+            comp    = comp.tolist()[0]
+            comp[i] = 0.99999            
+            fator  = (1-comp[i])/((self.NC-1)*0.00000001)
+            for j in xrange(self.NC):
+                if i != j:
+                    comp[j] = fator*0.00000001
+            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Psat,self.Temp)[i])
+        self.phisat = phisat
+        
 
+    def PontoBolha(self):
+        '''
+        Módulo para calcular o ponto de bolha segundo [1] e [2], quando a temperatura é conhecida. 
+            
+        ======
+        Saídas
+        ======
+        
+        * Um objeto da classe ``Condicao``, vide documentação da classe.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+        
+        [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.].                 
+        ''' 
+
+    
+        P        = []
+        coefAct  = self.Coeficiente_Atividade(self.z,self.Temp)
+        liquido  = Fase(composicao=self.z,coeffug=None,coefAct = coefAct)
+        coeffug  = self.estphi
+        
+        cont   = 0; deltaP = 10000
+        while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
+            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
+            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            coeffug = self.Coeficiente_Fugacidade(y,P[cont],self.Temp)
+            deltaP = abs(P[cont] - P[cont-1])
+            cont+=1
+        vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
+        self.Bolha = Condicao(P[cont-1],self.Temp,liquido,vapor,0.0)
+
+    def PontoOrvalho(self):
+        ''' 
+        Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a temperatura é conhecida.
+        
+        ======
+        Saídas
+        ======
+        
+        * Um objeto da classe ``Condicao``, vide documentação da classe.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid 
+        and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+        
+        [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical 
+        Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
+        ''' 
+        P        = [self.Pressao]
+        coeffug  = [1.0,1.0]
+        coefAct  = [1.0,1.0]        
+        cont   = 1; deltaP = 10000
+        while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
+            P.append(1/sum([self.z[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i])    for i in xrange(self.NC)]))
+            x       = [self.z[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i]) for i in xrange(self.NC)]
+            coeffug = self.Coeficiente_Fugacidade(self.z,P[cont],self.Temp)
+            coefAct = self.Coeficiente_Atividade(x,self.Temp)
+            
+            deltaP = abs(P[cont] - P[cont-1])
+            cont+=1
+
+
+        liquido = Fase(composicao=x,coeffug=None,coefAct = coefAct)
+        vapor   = Fase(composicao=self.z,coeffug=coeffug,coefAct = None)
+        self.Orvalho = Condicao(P[cont-1],self.Temp,liquido,vapor,1.0)
+        
+        
     def Flash(self):
         '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
+
         Módulo para realizar o calculo de flash
-    
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        Algoritmo sem entradas.
         
-        ==============================================================================
-                Saídas:
-        ==============================================================================
+        ======
+        Saídas
+        ======
         ?
         '''   
 
@@ -565,106 +1110,3 @@ class VLE:
 	    self.wFlash = 'Não é possível executar o Flash'
             self.Flash = None
 
-    def PhiSat(self):
-        '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o coeficiente de fugacidade nas condições de saturação (phisat).
-    
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        Algoritmo sem entradas.
-        
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Coeficiente de fugacidade em forma de *list*, onde o primeiro elemento é o coeficiente
-        de fugacidade para o primeiro componente da lista ``Componentes``, inserida em VLE. E o
-        segundo elemento é o coeficiente de fugacidade para o segundo componente da mesma lista.
-        ''' 
-        # Cálculo de phisat (coeficiente de fugacidade nas condições de saturação)
-        # Utilizado o mesmo modelo de phi, quando x->1.
-        phisat = []
-        for i in xrange(self.NC):
-            comp    = zeros((1,self.NC)) + 0.00000001
-            comp    = comp.tolist()[0]
-            comp[i] = 0.99999            
-            fator  = (1-comp[i])/((self.NC-1)*0.00000001)
-            for j in xrange(self.NC):
-                if i != j:
-                    comp[j] = fator*0.00000001
-            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Psat,self.Temp)[i])
-        self.phisat = phisat
-    def PontoBolha(self):
-        '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o ponto de bolha, quando a temperatura é conhecida.
-    
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        Algoritmo sem entradas.
-        
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Pressão e composição da fase de vapor, onde a pressão retorna na forma de *float*
-        e a composição na forma de *list*.
-        ''' 
-        
-        
-
-        P        = []
-        coefAct  = self.Coeficiente_Atividade(self.z,self.Temp)
-        liquido  = Fase(composicao=self.z,coeffug=None,coefAct = coefAct)
-        coeffug  = self.estphi
-        
-        cont   = 0; deltaP = 10000
-        while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
-            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
-#            print liquido.comp[0], liquido.coefAct[0], self.Componente[1].Psat
-            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
-            coeffug = self.Coeficiente_Fugacidade(y,P[cont],self.Temp)
-            deltaP = abs(P[cont] - P[cont-1])
-            cont+=1
-        vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
-        self.Bolha = Condicao(P[cont-1],self.Temp,liquido,vapor,0.0)
-
-    def PontoOrvalho(self):
-        '''
-        ==============================================================================
-                Definição:
-        ==============================================================================    
-        Módulo para calcular o ponto de orvalho, quando a temperatura é conhecida.
-    
-        ==============================================================================
-                Entradas:
-        ==============================================================================        
-        Algoritmo sem entradas.
-        
-        ==============================================================================
-                Saídas:
-        ==============================================================================
-        Pressão e composição da fase líquida, onde a pressão retorna na forma de *float*
-        e a composição na forma de *list*.
-        ''' 
-        P        = [self.Pressao]
-        coeffug  = [1.0,1.0]
-        coefAct  = [1.0,1.0]        
-        cont   = 1; deltaP = 10000
-        while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
-            P.append(1/sum([self.z[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i])    for i in xrange(self.NC)]))
-            x       = [self.z[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i]) for i in xrange(self.NC)]
-            coeffug = self.Coeficiente_Fugacidade(self.z,P[cont],self.Temp)
-            coefAct = self.Coeficiente_Atividade(x,self.Temp)
-            
-            deltaP = abs(P[cont] - P[cont-1])
-            cont+=1
-
-        liquido = Fase(composicao=x,coeffug=None,coefAct = coefAct)
-        vapor   = Fase(composicao=self.z,coeffug=coeffug,coefAct = None)
-        self.Orvalho = Condicao(P[cont-1],self.Temp,liquido,vapor,1.0)
