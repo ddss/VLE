@@ -55,11 +55,8 @@ class Componente_Caracterizar:
         
         Os métodos dispníveis desta classe são:
             * ``Pvap_Prausnitz_4th``:
-            
-                * Método para o cálculo da pressão de vapor. Vide documentação do método.
-                
-            * ``Propriedade``:
-            
+                * Método para o cálculo da pressão de vapor. Vide documentação do método.            
+            * ``Propriedade``:        
                 * Método para a busca no Banco de dados das propriedades puras dos componentes. Vide documentação do método.
         
         =======
@@ -214,12 +211,13 @@ class Componente_Caracterizar:
         '''
         # Verificação se a temperatura inserida está dentro ou não da faixa de aplicabilidade das fórmulas do cálculo de Psat
         if self.T < self.__TminPsat or self.T > self.__TmaxPsat:
-            warn(u'A temperatura especificada está fora da faixa de aplicabilidade da equaçao de Psat') # Emite um aviso. Contudo o programa continua a rodar
-            # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+            warn(u'A temperatura especificada está fora da faixa de aplicabilidade da equaçao de Psat. A temperatura de pertencer ao intervalo: (%f, '%self.__TminPsat+'%f).'%self.__TmaxPsat) # Emite um aviso. Contudo o programa continua a rodar
+        # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+        if self.T > self.__TmaxPsat:
             if self.EqPsat == self.__lista_EqPsat[0]:   
                 if self.nEqPsat == 1:
                     if self.T > self.Tc:
-                        raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica (Tc).'%(self.EqPsat,))
+                        raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.EqPsat,)+' Tc = %f.'%self.Tc)
 
 
     def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,nEq,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
@@ -309,8 +307,8 @@ class Componente_Caracterizar:
             * ``dipole_moment``: Momento dipolo (Adimensional)
             * ``r``, ``q`` & ``ql``: Parâmetros do modelo UNIQUAC (Adimensionais);
             * ``VPA``, ``VPB`` , ``VPC`` & ``VPD``: Parâmetros para o cálculo de Psat, vide [1];
-            * ``TminPsat``: Temperatura mínima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
-            * ``TmaxPsat``: Temperatura máxima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
+            * ``__TminPsat``: Temperatura mínima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
+            * ``__TmaxPsat``: Temperatura máxima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
             * ``ro``: Densidade do líquido em g/cm3;
             * ``Td``: Temperatura da densidade do líquido em Kelvin. 
             
@@ -490,7 +488,7 @@ class Modelo:
 
         # Validação da temperatura
         if T < faixa[0][0] or T > faixa[0][1]:
-            warn(u'A temperatura especificada está fora da faixa de aplicabilidade da mistura utilizada para o modelo desejado.') # Emite um aviso quando a temperatura está fora da faixa de aplicação. Contudo o programa continua a rodar
+            warn(u'A temperatura especificada está fora da faixa de aplicabilidade da mistura utilizada para o modelo desejado. A temperatura de pertencer ao intervalo: (%f, '%faixa[0][0]+'%f).'%faixa[0][1]) # Emite um aviso quando a temperatura está fora da faixa de aplicação. Contudo o programa continua a rodar
 
         
     def FormaEquacao(self,tabela):
@@ -583,7 +581,7 @@ class VIRIAL(Modelo):
         Referências
         ===========
         
-        [1] Mason, E. A.; Spurling, T. H. The Virial Equation of State; The
+        [1] MASON, E. A.; SPURLING, T. H. The Virial Equation of State; The
         International Encyclopedia of Physical Chemistry and Chemical
         Physics, Topic 10: The Fluid State, Vol. 2; Pergamon Press: New
         York, 1969; p 297
@@ -591,6 +589,8 @@ class VIRIAL(Modelo):
         [2] HAYDEN, J. G.; O’CONNELL, J. P. A Generalized Method for Predicting
         Second Virial Coefficients. Industrial & Engineering Chemistry Process Design and
         Development, v. 14, n. 3, p. 209–216, jul. 1975. ISSN 0196-4305.
+        
+        [3] TSONOPOULOS, C.; HEIDMAN, J.L. From the Virial to the cubic equation of state. Fluid Phase Equilib. 57 (1990) 261–276.
         '''
         # NOME DO MODELO
         self.Nome_modelo = 'Virial' # Atributo útil para a rotina VLE
@@ -869,7 +869,7 @@ class Van_Laar(Modelo):
         Referências
         ===========
         
-        [1] Van Laar, J. J. The Vapor pressure of binary mixtures. Z. Phys.
+        [1] VAN LAAR, J. J. The Vapor pressure of binary mixtures. Z. Phys.
         Chem. 1910, 72, 723−751.
         '''
         # NOME DO MODELO
@@ -880,15 +880,3 @@ class Van_Laar(Modelo):
 
         # PARAMETROS DO MODELO
         self.Parametro = self.Busca_Parametros('Van_Laar','Parametro') # Trasforma a def Parametros da classe Modelo em atributo da classe Van_Laar
-
-
-#Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
-#Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
-#
-#x   = [Comp1,Comp2]
-#PM  = VIRIAL(x)
-#mod = UNIQUAC(x,235,1)
-#mod2 = NRTL(x,150,1)
-#mod3 = WILSON(x,315,1)
-#mod4 = Van_Laar(x)
-#PM.coef_solv
