@@ -17,7 +17,7 @@ model_vap = VIRIAL(Componentes)
 model_liq = UNIQUAC(Componentes,330.0,1)
 
 # Realizando os cálculos            
-CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=395.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
 CalculoOrvalho = VLE('PontoOrvalho',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
 Calculo_Coef_Atividade = VLE('Coeficiente_Atividade',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
 Calculo_Coef_Fugacidade = VLE('Coeficiente_Fugacidade',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
