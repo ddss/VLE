@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Exemplo de uso do VLE. A mistura utilizada será Acetona-Metanol, os modelos para as fases líquida e de vapor são, respectivamente
 UNIQUAC e VIRIAL com a regra de Hayden O'Connel, a temperatura será 330.0 K e a pressão 1.013 bar.
