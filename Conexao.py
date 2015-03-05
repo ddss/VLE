@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from sqlite3 import connect
 from warnings import warn
 from scipy import exp, log
@@ -44,6 +46,7 @@ class Componente_Caracterizar:
             * ``ro``: Densidade do líquido em g/cm3;
             * ``Td``: Temperatura da densidade do líquido em Kelvin;
             * ``Grupo_funcional``: Grupo funcional do componente.        
+            
         =======
         Métodos     
         =======
@@ -68,9 +71,16 @@ class Componente_Caracterizar:
         
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
+        
+        # ---------------------------------------------------------------------
+        # CONEXÃO COM O BANCO DE DADOS
+        # ---------------------------------------------------------------------
         conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
-        self.cursor   = conector.cursor()                       # Permite a navegação no banco de dados a partir da rotina
+        self.cursor   = conector.cursor()                  # Permite a navegação no banco de dados a partir da rotina
 
+        # ---------------------------------------------------------------------
+        # VALIDAÇÕES
+        # ---------------------------------------------------------------------
         self.__lista_EqPsat = ['Prausnitz4th'] # Lista dos métodos utilizados para o cálculo da pressão de vapor
     
         # COMPONENTE & ID
@@ -78,17 +88,28 @@ class Componente_Caracterizar:
         if Componente == None:
             print u'Os seguintes componentes estão disponíveis no banco de dados: '+'%s, '*(len(self.lista_componentes())-1)%tuple(self.lista_componentes()[0:-1])+'%s.'%self.lista_componentes()[-1]
             raise NameError(u'Insira um dos componentes mostrados na lista.')
-            
-        self.Nome = Componente # Nome do componente
-        self.Validacao_Nome()  # Verificar se o nome do componente está no banco
-        self.Busca_ID()        # Busca do ID do componente e cria o atributo ID.
-        
-        # GRUPO FUNCIONAL
-        self.Busca_grupo()
-        
+
         # TEMPERATURA
         if T == None:
             raise ValueError(u'É necessário incluir um valor para a temperatura.')
+        
+        self.Validacao_Nome(Componente)  # Verificar se o nome do componente está no banco
+        
+        # ---------------------------------------------------------------------
+        # CONSULTA AO BANCO PARA DEFINIÇÃO DE VARIÁVEIS
+        # ---------------------------------------------------------------------
+        self.Nome = Componente # Nome do componente
+        
+        # ID da variável
+        self.Busca_ID() # Busca do ID do componente e cria o atributo ID.
+
+        # GRUPO FUNCIONAL
+        self.Busca_grupo()
+        
+        # ---------------------------------------------------------------------
+        # DEFINIÇÃO DE OUTRAS VARIÁVEIS
+        # ---------------------------------------------------------------------
+
         self.T    = T # Temperatura
         
         # PRESSÃO DE VAPOR
@@ -111,10 +132,9 @@ class Componente_Caracterizar:
         '''        
         self.cursor.execute('SELECT Nome FROM Componentes')  # Seleciona a coluna Nome da tabela Componentes do banco de dados
         row = self.cursor.fetchall()                         # Retorna a coluna selecionada em forma de lista de tuplas
-        return [i[0] for i in row]                      # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (os nomes dos componentes)
+        return [i[0] for i in row]                           # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (os nomes dos componentes)
         
-
-    def Validacao_Nome(self):
+    def Validacao_Nome(self,Nome):
         '''
         Método para validar a entrada ``Componente``. Comparando esta
         entrada com os nomes obtidos pelo método ``lista_componentes``.
@@ -122,7 +142,7 @@ class Componente_Caracterizar:
         de um erro como saída deste método. O erro emitido interrompe a execuçao do programa.
         '''
         # Validação do nome do componente
-        if self.Nome not in self.lista_componentes():                               
+        if Nome not in self.lista_componentes():                               
             raise NameError(u'O nome do componente não consta no Banco de dados. Os seguintes componentes estão disponíveis no banco de dados: '+'%s, '*(len(self.lista_componentes())-1)%tuple(self.lista_componentes()[0:-1])+'%s.'%self.lista_componentes()[-1])  # Emite um erro com a mensagem inserida no método
 
     def Busca_grupo(self):
