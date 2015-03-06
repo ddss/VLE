@@ -8,22 +8,22 @@ from numpy import zeros
 
 class Componente_Caracterizar:
     
-    def __init__(self,Componente,ConfigPsat=('Prausnitz4th',None),T=None):
-        '''
-        Algoritmo para caracterizar os componentes.
+    def __init__(self,Componente,T,ConfigPsat=('Prausnitz4th',None)):
+        u'''
+        Objeto para definir as propriedades de componentes puros.
         
         ========
         Entradas
         ========
         
-        * Componente ('string')     : Nome do componente conforme constanta no Banco de dados
+        * Componente ('string')     : Nome do componente conforme consta no Banco de dados
         
             * A lista de componentes disponíveis no Banco de dados pode ser acessada da seguinte forma: ::
                 
-                Componente = Componente_Caracterizar(None) 
-                
+                >>> Componente_Caracterizar(None) 
+        
+        * T: Temperatura em Kelvin                
         * ConfigPsat ('tuple' or 'list'): São as opções para o cálculo da pressão de vapor. Primeiro argumento são as referências disponíveis ('Prausnitz4th') e o segundo o número da equação conforme consta no Banco de dados.
-        * T: Temperatura em Kelvin
         
         =========
         Atributos
@@ -75,95 +75,89 @@ class Componente_Caracterizar:
         # ---------------------------------------------------------------------
         # CONEXÃO COM O BANCO DE DADOS
         # ---------------------------------------------------------------------
-        conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
-        self.cursor   = conector.cursor()                  # Permite a navegação no banco de dados a partir da rotina
+        conector     = connect('THERMO_DATA_BANK_EXEMPLO.db') # Conecta a rotina ao banco de dados
+        # TODO: self.__cursor = conector.cursor()        
+        self.cursor  = conector.cursor()                      # Permite a navegação no banco de dados a partir da rotina
 
         # ---------------------------------------------------------------------
-        # VALIDAÇÕES
+        # LISTAGEM DE MÉTODOS DISPONÍVEIS
         # ---------------------------------------------------------------------
         self.__lista_EqPsat = ['Prausnitz4th'] # Lista dos métodos utilizados para o cálculo da pressão de vapor
     
-        # COMPONENTE & ID
-            # Mostrar lista de componentes para o usuário
+        # ---------------------------------------------------------------------
+        # LISTA DE COMPONENTES - CASO SOLICITADO
+        # ---------------------------------------------------------------------
+        
+        # Mostrar lista de componentes para o usuário, caso solicitado
         if Componente == None:
-            print u'Os seguintes componentes estão disponíveis no banco de dados: '+'%s, '*(len(self.lista_componentes())-1)%tuple(self.lista_componentes()[0:-1])+'%s.'%self.lista_componentes()[-1]
-            raise NameError(u'Insira um dos componentes mostrados na lista.')
-
-        # TEMPERATURA
-        if T == None:
-            raise ValueError(u'É necessário incluir um valor para a temperatura.')
+            
+            print u'Os seguintes componentes estão disponíveis no banco de dados: '+', '.join(self.lista_componentes())+'.'
         
-        self.Validacao_Nome(Componente)  # Verificar se o nome do componente está no banco
+        else:
+            # ---------------------------------------------------------------------
+            # VALIDAÇÃO
+            # ---------------------------------------------------------------------          
+        
+            # Nome dos componentes
+            self.Validacao_Nome(Componente)  # Verificar se o nome do componente está no banco
+            
+            # ---------------------------------------------------------------------
+            # CONSULTA AO BANCO E DEFINIÇÃO DE VARIÁVEIS
+            # ---------------------------------------------------------------------
+            self.Nome = Componente # Nome do componente
+            
+            # ID da variável
+            self.Busca_ID() # Busca do ID do componente e cria o atributo ID.
+    
+            # GRUPO FUNCIONAL
+            self.Busca_grupo() # Busca o grupo funcional e cria atributo
+            
+            # ---------------------------------------------------------------------
+            # DEFINIÇÃO DE OUTRAS VARIÁVEIS
+            # ---------------------------------------------------------------------
+            self.T    = T # Temperatura
+            
+            # PRESSÃO DE VAPOR
+            self.EqPsat   = ConfigPsat[0] # Nome da equação para cálculo da pressão de vapor
+            self.nEqPsat  = ConfigPsat[1] # Número da equação de Psat (Vide referência(?))
+            
+            self.Validacao_e_Default_de_EqPsat() # Validação dos atributos de pressão de vapor
+    
+            # PROPRIEDADES DO COMPONENTE PURO
+            self.Propriedade() # Criação dos atributos contendo as propriedades do componentes puro
         
         # ---------------------------------------------------------------------
-        # CONSULTA AO BANCO PARA DEFINIÇÃO DE VARIÁVEIS
+        # ENCERRAR CONEXÃO COM O BANCO
         # ---------------------------------------------------------------------
-        self.Nome = Componente # Nome do componente
-        
-        # ID da variável
-        self.Busca_ID() # Busca do ID do componente e cria o atributo ID.
-
-        # GRUPO FUNCIONAL
-        self.Busca_grupo()
-        
-        # ---------------------------------------------------------------------
-        # DEFINIÇÃO DE OUTRAS VARIÁVEIS
-        # ---------------------------------------------------------------------
-
-        self.T    = T # Temperatura
-        
-        # PRESSÃO DE VAPOR
-        self.EqPsat   = ConfigPsat[0] # Nome da equação para cálculo da pressão de vapor
-        self.nEqPsat  = ConfigPsat[1] # Número da equação de Psat (Vide referência(?))
-        
-        self.Validacao_e_Default_de_EqPsat() # Validação dos atributos de pressão de vapor
-
-        # PROPRIEDADES DO COMPONENTE PURO
-        self.Propriedade() # Criação dos atributos contendo as propriedades do componentes puro
+        conector.close()
         
     def lista_componentes(self):
-        '''
+        u'''
         Método para gerar uma lista contendo os nomes dos componentes disponíveis no Banco de dados.
         
         ======
         Saídas
         ======
+        
         * Retorna uma lista contendo os nomes dos componentes.
         '''        
+        
         self.cursor.execute('SELECT Nome FROM Componentes')  # Seleciona a coluna Nome da tabela Componentes do banco de dados
         row = self.cursor.fetchall()                         # Retorna a coluna selecionada em forma de lista de tuplas
         return [i[0] for i in row]                           # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (os nomes dos componentes)
         
     def Validacao_Nome(self,Nome):
-        '''
+        u'''
         Método para validar a entrada ``Componente``. Comparando esta
         entrada com os nomes obtidos pelo método ``lista_componentes``.
         Se a entrada de ``Componente`` não passam pela validação, há a emissão
         de um erro como saída deste método. O erro emitido interrompe a execuçao do programa.
         '''
         # Validação do nome do componente
-        if Nome not in self.lista_componentes():                               
+        if Nome not in self.lista_componentes():
+            # TODO: corrigir para join                         
             raise NameError(u'O nome do componente não consta no Banco de dados. Os seguintes componentes estão disponíveis no banco de dados: '+'%s, '*(len(self.lista_componentes())-1)%tuple(self.lista_componentes()[0:-1])+'%s.'%self.lista_componentes()[-1])  # Emite um erro com a mensagem inserida no método
 
-    def Busca_grupo(self):
-        '''
-        Método para busca do grupo funcional do componente.
-        
-        ======
-        Saídas
-        ======
-        
-        * O método gera o atributo ``Grupo_funcional``. Este é uma ``string`` representando o grupo funcional do componente requerido.
-        '''
-        # BUSCA ID_GRUPO NA TABELA COMPONENTES
-        self.cursor.execute('SELECT ID_grupo FROM Componentes WHERE Nome=?',(self.Nome,))        
-        row = self.cursor.fetchall()        
-        ID_grupo = row[0][0]
-        # bUSCA NOME DO GRUPO PELA ID_GRUPO NA TABELA GRUPO
-        self.cursor.execute('SELECT Nome FROM Grupo WHERE ID=?',(ID_grupo,))        
-        row = self.cursor.fetchall()
-        self.Grupo_funcional = row[0][0]
-        
     def Busca_ID(self):
         '''
         Método para busca do ID, chave primária, da tabela Componentes no Banco de dados.
@@ -176,7 +170,29 @@ class Componente_Caracterizar:
         '''
         self.cursor.execute('SELECT ID FROM Componentes WHERE  Nome=?',(self.Nome,)) # Busca do ID do componente na tabela Componentes no banco de dados
         row = self.cursor.fetchall()                                                 # Retorna a linha contendo o ID em forma de lista de tupla
-        self.ID = row[0][0]                                                     # Cria o atributo ID
+        self.ID = row[0][0]                                                          # Cria o atributo ID
+
+    def Busca_grupo(self):
+        '''
+        Método para busca do grupo funcional do componente.
+        
+        ======
+        Saídas
+        ======
+        
+        * O método gera o atributo ``Grupo_funcional``. Este é uma ``string`` representando o grupo funcional do componente requerido.
+        '''
+
+        # BUSCA ID_GRUPO NA TABELA COMPONENTES
+        self.cursor.execute('SELECT ID_grupo FROM Componentes WHERE ID=?',(self.ID,))        
+        row = self.cursor.fetchall()        
+        ID_grupo = row[0][0]
+        
+        # BUSCA NOME DO GRUPO PELA ID_GRUPO NA TABELA GRUPO
+        self.cursor.execute('SELECT Nome FROM Grupo WHERE ID=?',(ID_grupo,))        
+        row = self.cursor.fetchall()
+        self.Grupo_funcional = row[0][0]
+        
 
     def Busca_FormaEqPsat(self):        
         '''
@@ -205,12 +221,15 @@ class Componente_Caracterizar:
         
         # Caso o método inserido não constar na lista de métodos disponíveis
         if self.EqPsat not in self.__lista_EqPsat:                      
+            # TODO: join
             raise NameError(u'O método de cálculo de Psat não consta no Banco de dados. Métodos disponíveis: '+'%s, '*(len(self.__lista_EqPsat)-1)%tuple(self.__lista_EqPsat[0:-1])+'%s.'%self.__lista_EqPsat[-1])
+        
         # Caso o método inserido conste na lista de métodos disponíveis:
         if self.EqPsat == self.__lista_EqPsat[0]:
             dadosbanco = self.Busca_FormaEqPsat()   # Busca as formas de equações disponíveis do banco de dados
             if self.nEqPsat != None:                # Caso a forma da equação seja inserida pelo usuário
                 if self.nEqPsat not in dadosbanco:  # Caso a forma da equação inserida não conste no banco
+                    # TODO: join
                     raise ValueError(u'Foi escolhida a equação %s para calcular a pressão de saturação. Contudo foi inserido uma forma de equação que não consta no Banco de dados (Vide documentação do Banco de dados). Formas de equações disponíveis: '%(self.EqPsat,)+'%d,'*(len(dadosbanco)-1)%tuple(dadosbanco[0:-1])+'%d.'%dadosbanco[-1]) 
             
             if self.nEqPsat == None:                # Caso a forma da equação não seja inserida
@@ -230,9 +249,12 @@ class Componente_Caracterizar:
         # Verificação se a temperatura inserida está dentro ou não da faixa de aplicabilidade das fórmulas do cálculo de Psat
         if self.T < self.__TminPsat or self.T > self.__TmaxPsat:
             warn(u'A temperatura especificada está fora da faixa de aplicabilidade da equaçao de Psat. A temperatura de pertencer ao intervalo: (%f, '%self.__TminPsat+'%f).'%self.__TmaxPsat) # Emite um aviso. Contudo o programa continua a rodar
-        # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+ 
+       # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
         if self.T > self.__TmaxPsat:
-            if self.EqPsat == self.__lista_EqPsat[0]:   
+            # Sendo a equação de Psat Prausnitz4th
+            if self.EqPsat == self.__lista_EqPsat[0]:  
+                # sendo a primeira forma disponível
                 if self.nEqPsat == 1:
                     if self.T > self.Tc:
                         raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.EqPsat,)+' Tc = %f.'%self.Tc)
@@ -306,7 +328,7 @@ class Componente_Caracterizar:
 
 
     def Propriedade(self):
-        '''
+        u'''
         Algoritmo para busca das propriedades dos componentes puros.
         
         ======        
@@ -347,7 +369,7 @@ class Componente_Caracterizar:
         self.Pc              = row[0][3]  # Pressão crítica / bar
         self.w               = row[0][4]  # Fator acêtrico / admnesional
         self.MM              = row[0][5]  # Massa Molar
-        self.radius_giration = row[0][6]  # mean Radius of gyration
+        self.radius_giration = row[0][6]  # mean radius of gyration
         self.Zc              = row[0][7]  # Fator de Compressibilidade crítico
         self.Vc              = row[0][8]  # Volume molar crítico
         self.dipole_moment   = row[0][9]  # Momento dipolo
@@ -361,6 +383,7 @@ class Componente_Caracterizar:
         # PARÂMETROS DO CÁLCULO DE PRESSÃO DE VAPOR (The Properties of Gases & Liquids, 4th edition)
         
         if self.EqPsat == self.__lista_EqPsat[0]:
+            
             self.cursor.execute('SELECT * FROM Parametros_Psat_Prausnitz_4th_edition WHERE  ID_componente=? AND ID_forma=?',(self.ID,self.nEqPsat))
             row = self.cursor.fetchall() 
             
@@ -383,7 +406,7 @@ class Componente_Caracterizar:
 class Modelo:
 
     def __init__(self,Componentes):
-        '''
+        u'''
         Classe auxiliar para facilitar as buscas e validações dos parâmetros dos modelos.
         
         ========
@@ -417,8 +440,8 @@ class Modelo:
         * ``ValidacaoFormaEq``:
             * Método utilizado para validar a forma de equação inserida. Vide documentação do método.
         '''
-        conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
-        self.cursor   = conector.cursor()                       # Permite a navegação no banco de dados a partir da rotina
+        self.__conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
+
         # VALIDA SE A ENTRADA Componentes É UM OBJETO DA CLASSE Componente_Caracterizar        
         teste                 = [isinstance(elemento,Componente_Caracterizar) for elemento in Componentes]
         if False in teste:
@@ -426,7 +449,6 @@ class Modelo:
             
         # BUSCA DOS ID'S    
         self.__ID_Componentes = [Componente.ID for Componente in Componentes] # Criação da lista com as ID's dos componentes
-
         
     def Busca_Parametros(self,tabela,coluna,IDFORMA=False):
         '''
@@ -480,8 +502,9 @@ class Modelo:
                     selecao = 'SELECT '+coluna+' FROM '+tabela+' WHERE ID_componente_i=? AND ID_componente_j=? '
                 else:
                     selecao = 'SELECT '+coluna+' FROM '+tabela+' WHERE ID_forma=%d AND ID_componente_i=? AND ID_componente_j=? '%IDFORMA
-                self.cursor.execute(selecao,(ID_i,ID_j))
-                row = self.cursor.fetchall() 
+                self.__conector.cursor().execute(selecao,(ID_i,ID_j))
+                row = self.__conector.cursor().fetchall() 
+                print row
                 retorno[i][j] = row[0][0]
                 
         return retorno
@@ -503,8 +526,8 @@ class Modelo:
         # Busca da faixa de temperatura no banco de dados        
         
         selecao    =  'SELECT TempMin, TempMax FROM '+tabela+' WHERE ID_componente_i=? AND ID_componente_j=? AND ID_forma=?'      
-        self.cursor.execute(selecao,(self.__ID_Componentes[0],self.__ID_Componentes[1],FormaEq)) 
-        faixa      =   self.cursor.fetchall()
+        self.__conector.cursor().execute(selecao,(self.__ID_Componentes[0],self.__ID_Componentes[1],FormaEq)) 
+        faixa      =  self.__conector.cursor().fetchall()
 
         # Validação da temperatura
         if T < faixa[0][0] or T > faixa[0][1]:
@@ -530,8 +553,8 @@ class Modelo:
         '''
         self.tabela = tabela # Criação do atributo tabela
         
-        self.cursor.execute('SELECT ID_forma FROM '+self.tabela+' WHERE ID_componente_i=? AND ID_componente_j=?',(self.__ID_Componentes[0],self.__ID_Componentes[1]))
-        row                 = self.cursor.fetchall() # linha contendo as formas de equações disponíveis em forma de lista de tupla..
+        self.__conector.cursor().execute('SELECT ID_forma FROM '+self.tabela+' WHERE ID_componente_i=? AND ID_componente_j=?',(self.__ID_Componentes[0],self.__ID_Componentes[1]))
+        row                 = self.__conector.cursor().fetchall() # linha contendo as formas de equações disponíveis em forma de lista de tupla..
         self.lista_forma_eq = [i[0] for i in row] # Criação do atriubto lista_forma_eq em forma de lista de inteiros.
         
          
