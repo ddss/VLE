@@ -441,6 +441,7 @@ class Modelo:
             * Método utilizado para validar a forma de equação inserida. Vide documentação do método.
         '''
         self.__conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
+        self.__cursor = self.__conector.cursor()
 
         # VALIDA SE A ENTRADA Componentes É UM OBJETO DA CLASSE Componente_Caracterizar        
         teste                 = [isinstance(elemento,Componente_Caracterizar) for elemento in Componentes]
@@ -502,9 +503,8 @@ class Modelo:
                     selecao = 'SELECT '+coluna+' FROM '+tabela+' WHERE ID_componente_i=? AND ID_componente_j=? '
                 else:
                     selecao = 'SELECT '+coluna+' FROM '+tabela+' WHERE ID_forma=%d AND ID_componente_i=? AND ID_componente_j=? '%IDFORMA
-                self.__conector.cursor().execute(selecao,(ID_i,ID_j))
-                row = self.__conector.cursor().fetchall() 
-                print row
+                self.__cursor.execute(selecao,(ID_i,ID_j))
+                row = self.__cursor.fetchall() 
                 retorno[i][j] = row[0][0]
                 
         return retorno
@@ -526,8 +526,8 @@ class Modelo:
         # Busca da faixa de temperatura no banco de dados        
         
         selecao    =  'SELECT TempMin, TempMax FROM '+tabela+' WHERE ID_componente_i=? AND ID_componente_j=? AND ID_forma=?'      
-        self.__conector.cursor().execute(selecao,(self.__ID_Componentes[0],self.__ID_Componentes[1],FormaEq)) 
-        faixa      =  self.__conector.cursor().fetchall()
+        self.__cursor.execute(selecao,(self.__ID_Componentes[0],self.__ID_Componentes[1],FormaEq)) 
+        faixa      =  self.__cursor.fetchall()
 
         # Validação da temperatura
         if T < faixa[0][0] or T > faixa[0][1]:
@@ -553,8 +553,8 @@ class Modelo:
         '''
         self.tabela = tabela # Criação do atributo tabela
         
-        self.__conector.cursor().execute('SELECT ID_forma FROM '+self.tabela+' WHERE ID_componente_i=? AND ID_componente_j=?',(self.__ID_Componentes[0],self.__ID_Componentes[1]))
-        row                 = self.__conector.cursor().fetchall() # linha contendo as formas de equações disponíveis em forma de lista de tupla..
+        self.__cursor.execute('SELECT ID_forma FROM '+self.tabela+' WHERE ID_componente_i=? AND ID_componente_j=?',(self.__ID_Componentes[0],self.__ID_Componentes[1]))
+        row                 = self.__cursor.fetchall() # linha contendo as formas de equações disponíveis em forma de lista de tupla..
         self.lista_forma_eq = [i[0] for i in row] # Criação do atriubto lista_forma_eq em forma de lista de inteiros.
         
          
@@ -665,8 +665,8 @@ class VIRIAL(Modelo):
             else:
                 self.coef_solv  = Parametro_int
         
+        self._Modelo__conector.close()
             
-    
     def ValidacaoREGRA(self):
         '''
         Método para validação da regra de mistura da equação Virial. Caso a regra inserida não constar
@@ -747,6 +747,8 @@ class UNIQUAC(Modelo):
         else:
             self.Parametro_int = Parametro_int
          
+        self._Modelo__conector.close()
+         
 class NRTL(Modelo):
    
     def __init__(self,Componentes,T,FormaEqNRTL = None,Parametro_int=None,alpha = None):
@@ -822,6 +824,7 @@ class NRTL(Modelo):
         else:
             self.alpha   = alpha
         
+        self._Modelo__conector.close()
 
 class WILSON(Modelo):
     
@@ -893,6 +896,8 @@ class WILSON(Modelo):
         else:
             self.Parametro_int = Parametro_int
 
+        self._Modelo__conector.close()
+        
 class Van_Laar(Modelo):
     
     def __init__(self,Componentes,Parametro=None):
@@ -944,3 +949,5 @@ class Van_Laar(Modelo):
             self.Parametro = self.Busca_Parametros('Van_Laar','Parametro') # Trasforma a def Parametros da classe Modelo em atributo da classe Van_Laar
         else:
             self.Parametro = Parametro
+
+        self._Modelo__conector.close()
