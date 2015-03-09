@@ -379,21 +379,21 @@ class VLE:
             else:
                 self.estphi = estphi
                 
-            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+            if self.model_liq.nome_modelo == 'UNIQUAC':                
                 self.coordnumber     = z_coordenacao # Número de coordenação do componente               
             
             self.PontoBolha(self.z,self.Temp)
 
         elif Algoritmo == 'PontoOrvalho':
             
-            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+            if self.model_liq.nome_modelo == 'UNIQUAC':                
                 self.coordnumber     = z_coordenacao # Número de coordenação do componente  
             
             self.PontoOrvalho(self.z,self.Temp)
 
         elif Algoritmo == 'Coeficiente_Atividade':
             
-            if self.model_liq.Nome_modelo == 'UNIQUAC':                
+            if self.model_liq.nome_modelo == 'UNIQUAC':                
                 self.coordnumber     = z_coordenacao # Número de coordenação do componente                            
                         
             self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
@@ -583,32 +583,32 @@ class VLE:
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     
-                    if self.Componente[j].Grupo_funcional in ['Ketone','Aldehyde','Alkyl Nitrile','Ether','Carboxylic Acid', 'Ester']:
+                    if self.Componente[j].grupo_funcional in ['Ketone','Aldehyde','Alkyl Nitrile','Ether','Carboxylic Acid', 'Ester']:
                         if i == j:
                             
                             parametro_a[i][j]        = -2.14e-4*mi_reduzido[j]-4.308e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                             
-                    elif self.Componente[j].Grupo_funcional in ['Alkyl Halide', 'Mercaptan','Sulfide', 'Disulfides']:
+                    elif self.Componente[j].grupo_funcional in ['Alkyl Halide', 'Mercaptan','Sulfide', 'Disulfides']:
                         if i == j:
                             
                             parametro_a[i][j]        = -2.188e-11*(mi_reduzido[j])**4 - 7.831e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                 
-                    elif self.Componente[j].Grupo_funcional == 'Alcohol':
-                        if self.Componente[j].Nome != 'Metanol':
+                    elif self.Componente[j].grupo_funcional == 'Alcohol':
+                        if self.Componente[j].nome != 'Metanol':
                             if i == j:
                                 
                                 parametro_a[i][j]    =  0.0878
                                 parametro_b[i][j]    =  0.00908 + 0.0006957*mi_reduzido[j]
                         
-                    elif self.Componente[j].Nome == 'Metanol':
+                    elif self.Componente[j].nome == 'Metanol':
                         if i == j:
                             
                             parametro_a[i][j]        = 0.0878
                             parametro_b[i][j]        = 0.0525
                     
-                    elif self.Componente[j].Nome == 'Agua':
+                    elif self.Componente[j].nome == 'Agua':
                         if i == j:
                             
                             parametro_a[i][j]        = -0.0109
@@ -722,11 +722,11 @@ class VLE:
                 
         '''                        
         # Modelo UNIQUAC
-        if self.model_liq.Nome_modelo == 'UNIQUAC':
+        if self.model_liq.nome_modelo == 'UNIQUAC':
             
-            if self.model_liq.FormaEq == 1:
-                # Caso tenha em mãos a diferenca do parametro a. A FormaEq 1 é a mais recorrente.
-                a     = self.model_liq.Parametro_int
+            if self.model_liq.formaEq == 1:
+                # Caso tenha em mãos a diferenca do parametro a. A formaEq 1 é a mais recorrente.
+                a     = self.model_liq.parametro_int
     
                 tau   = [[exp(-a[i][j]/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
                 phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
@@ -741,9 +741,9 @@ class VLE:
     
                 Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
                 
-            elif self.model_liq.FormaEq == 2:
+            elif self.model_liq.formaEq == 2:
                 # Caso tenha em mãos o parametro tau 
-                tau     = self.model_liq.Parametro_int
+                tau     = self.model_liq.parametro_int
     
                 phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
                 teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
@@ -757,9 +757,9 @@ class VLE:
     
                 Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]
 
-            elif self.model_liq.FormaEq == 3:
+            elif self.model_liq.formaEq == 3:
                 # Caso tenha em mãos o parametro a do componente puro
-                a_ij  = self.model_liq.Parametro_int
+                a_ij  = self.model_liq.parametro_int
     
                 tau   = [[exp(-(a_ij[i][j]-a_ij[j][j])/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
                 phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
@@ -773,16 +773,18 @@ class VLE:
                 Residual      = [-self.Componente[i].ql*log(sum([tetal[j]*tau[j][i] for j in xrange(self.NC)])) + self.Componente[i].ql - A[i]      for i in xrange(self.NC)] 
     
                 Coeficiente_Atividade = [exp(Combinatorial[i]+Residual[i]) for i in xrange(self.NC)]                
-                
+        #==============================================================================
         # Modelo NRTL
-        if self.model_liq.Nome_modelo == 'NRTL':
+        #==============================================================================
+        
+        if self.model_liq.nome_modelo == 'NRTL':
             
             R = 83.144621# em cm3.bar/ K.mol
             alpha       = self.model_liq.alpha            
             
-            if self.model_liq.FormaEq == 1:
-                # Caso tenha em mãos a diferenca do parametro g. A FormaEq 1 é a mais recorrente.
-                g      = self.model_liq.Parametro_int                                
+            if self.model_liq.formaEq == 1:
+                # Caso tenha em mãos a diferenca do parametro g. A formaEq 1 é a mais recorrente.
+                g      = self.model_liq.parametro_int                                
                 
                 tau    =  [[g[i][j]/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
                 G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -792,9 +794,9 @@ class VLE:
     
                 Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]             
                 
-            elif self.model_liq.FormaEq == 2:
+            elif self.model_liq.formaEq == 2:
                 # Caso tenha em mãos o parametro tau 
-                tau    = self.model_liq.Parametro_int                                
+                tau    = self.model_liq.parametro_int                                
             
                 G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
                 
@@ -803,9 +805,9 @@ class VLE:
     
                 Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]  
                 
-            elif self.model_liq.FormaEq == 3:
+            elif self.model_liq.formaEq == 3:
                 # Caso tenha em mãos o parametro g do componente puro 
-                g_ij      = self.model_liq.Parametro_int                                
+                g_ij      = self.model_liq.parametro_int                                
                 
                 tau    =  [[(g_ij[i][j]-g_ij[j][j])/(R*T) for j in xrange(self.NC)] for i in xrange(self.NC)]
                 G      = [[exp(-alpha[i][j]*tau[i][j]) for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -815,17 +817,20 @@ class VLE:
     
                 Coeficiente_Atividade = [exp( parte1[i] + parte2[i] ) for i in xrange(self.NC)]
                 
-        # Modelo de Wilson                      
-        if self.model_liq.Nome_modelo == 'Wilson':
+        #==============================================================================
+        # Modelo de Wilson                               
+        #==============================================================================
+        
+        if self.model_liq.nome_modelo == 'Wilson':
             
-            if self.model_liq.FormaEq == 1:
+            if self.model_liq.formaEq == 1:
             # Caso tenha em mãos o parametro LAMBDA. 
-                A          =   self.model_liq.Parametro_int
+                A          =   self.model_liq.parametro_int
             
                 Coeficiente_Atividade = [exp( -log( sum([x[j]*A[i][j] for j in xrange(self.NC)]) ) + 1.0 - sum([ x[k]*A[k][i]/(sum([x[j]*A[k][j] for j in xrange(self.NC)])) for k in xrange(self.NC) ]) ) for i in xrange(self.NC) ]
                
        # Modelo Van Laar
-        if self.model_liq.Nome_modelo == 'Van Laar':
+        if self.model_liq.nome_modelo == 'Van Laar':
             
             R  = 83.144621 # em cm3.bar/ K.mol
             
@@ -869,7 +874,7 @@ class VLE:
         
         '''   
         R = 83.144621 # em cm3.bar/ K.mol
-        if self.model_vap.Nome_modelo == 'Virial':
+        if self.model_vap.nome_modelo == 'Virial':
             NC = size(y)
             self.Second_Virial_Coef()
             B = self.Bvirial
@@ -880,9 +885,10 @@ class VLE:
             # Validação grosseira das condições de pressão:
             P_lim = (T/2.0)*sum([y[i]*self.Componente[i].Pc for i in xrange(NC)])/sum([y[i]*self.Componente[i].Tc for i in xrange(NC)])
             if P <= P_lim:
-                warn(u'A pressão do sistema é inferior à da validação')
+                warn(u'A pressão do sistema é inferior à da validação da equação VIRIAL, vide documentação da mesma.')
             else:
-                warn(u'A pressão do sistema é SUPERIOR à da validação - Verificar uso da equacao do VIRIAL')
+                warn(u'A pressão do sistema é superior à da validação da equação VIRIAL, vide documentação da mesma.')
+                
         return phi
         
     def PhiSat(self,T):

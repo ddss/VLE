@@ -45,7 +45,7 @@ class Componente_Caracterizar:
             * ``TmaxPsat``: Temperatura máxima para a aplicaçao da fórmula do cálculo de Psat em Kelvin;
             * ``ro``: Densidade do líquido em g/cm3;
             * ``Td``: Temperatura da densidade do líquido em Kelvin;
-            * ``Grupo_funcional``: Grupo funcional do componente.        
+            * ``grupo_funcional``: Grupo funcional do componente.        
             
         =======
         Métodos     
@@ -72,39 +72,36 @@ class Componente_Caracterizar:
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
         
-        # ---------------------------------------------------------------------
-        # CONEXÃO COM O BANCO DE DADOS
-        # ---------------------------------------------------------------------
+        #==============================================================================
+        #         CONEXÃO COM O BANCO DE DADOS
+        #==============================================================================
         conector     = connect('THERMO_DATA_BANK_EXEMPLO.db') # Conecta a rotina ao banco de dados
-        # TODO: self.__cursor = conector.cursor()        
-        self.cursor  = conector.cursor()                      # Permite a navegação no banco de dados a partir da rotina
+        self.__cursor  = conector.cursor()                      # Permite a navegação no banco de dados a partir da rotina
 
-        # ---------------------------------------------------------------------
-        # LISTAGEM DE MÉTODOS DISPONÍVEIS
-        # ---------------------------------------------------------------------
+        #==============================================================================
+        #         LISTAGEM DE MÉTODOS DISPONÍVEIS
+        #==============================================================================
         self.__lista_EqPsat = ['Prausnitz4th'] # Lista dos métodos utilizados para o cálculo da pressão de vapor
     
-        # ---------------------------------------------------------------------
-        # LISTA DE COMPONENTES - CASO SOLICITADO
-        # ---------------------------------------------------------------------
-        
+        #==============================================================================
+        #         LISTA DE COMPONENTES - CASO SOLICITADO
+        #==============================================================================
         # Mostrar lista de componentes para o usuário, caso solicitado
         if Componente == None:
             
             print u'Os seguintes componentes estão disponíveis no banco de dados: '+', '.join(self.lista_componentes())+'.'
         
         else:
-            # ---------------------------------------------------------------------
-            # VALIDAÇÃO
-            # ---------------------------------------------------------------------          
-        
+            #==============================================================================
+            #             VALIDAÇÃO         
+            #==============================================================================
             # Nome dos componentes
             self.Validacao_Nome(Componente)  # Verificar se o nome do componente está no banco
             
-            # ---------------------------------------------------------------------
-            # CONSULTA AO BANCO E DEFINIÇÃO DE VARIÁVEIS
-            # ---------------------------------------------------------------------
-            self.Nome = Componente # Nome do componente
+            #==============================================================================
+            #             CONSULTA AO BANCO E DEFINIÇÃO DE VARIÁVEIS
+            #==============================================================================
+            self.nome = Componente # Nome do componente
             
             # ID da variável
             self.Busca_ID() # Busca do ID do componente e cria o atributo ID.
@@ -112,13 +109,13 @@ class Componente_Caracterizar:
             # GRUPO FUNCIONAL
             self.Busca_grupo() # Busca o grupo funcional e cria atributo
             
-            # ---------------------------------------------------------------------
-            # DEFINIÇÃO DE OUTRAS VARIÁVEIS
-            # ---------------------------------------------------------------------
+            #==============================================================================
+            #             DEFINIÇÃO DE OUTRAS VARIÁVEIS
+            #==============================================================================
             self.T    = T # Temperatura
             
             # PRESSÃO DE VAPOR
-            self.EqPsat   = ConfigPsat[0] # Nome da equação para cálculo da pressão de vapor
+            self.eqPsat   = ConfigPsat[0] # Nome da equação para cálculo da pressão de vapor
             self.nEqPsat  = ConfigPsat[1] # Número da equação de Psat (Vide referência(?))
             
             self.Validacao_e_Default_de_EqPsat() # Validação dos atributos de pressão de vapor
@@ -126,9 +123,9 @@ class Componente_Caracterizar:
             # PROPRIEDADES DO COMPONENTE PURO
             self.Propriedade() # Criação dos atributos contendo as propriedades do componentes puro
         
-        # ---------------------------------------------------------------------
-        # ENCERRAR CONEXÃO COM O BANCO
-        # ---------------------------------------------------------------------
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================
         conector.close()
         
     def lista_componentes(self):
@@ -142,9 +139,9 @@ class Componente_Caracterizar:
         * Retorna uma lista contendo os nomes dos componentes.
         '''        
         
-        self.cursor.execute('SELECT Nome FROM Componentes')  # Seleciona a coluna Nome da tabela Componentes do banco de dados
-        row = self.cursor.fetchall()                         # Retorna a coluna selecionada em forma de lista de tuplas
-        return [i[0] for i in row]                           # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (os nomes dos componentes)
+        self.__cursor.execute('SELECT Nome FROM Componentes')  # Seleciona a coluna Nome da tabela Componentes do banco de dados
+        row = self.__cursor.fetchall()                         # Retorna a coluna selecionada em forma de lista de tuplas
+        return [i[0] for i in row]                             # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (os nomes dos componentes)
         
     def Validacao_Nome(self,Nome):
         u'''
@@ -155,11 +152,10 @@ class Componente_Caracterizar:
         '''
         # Validação do nome do componente
         if Nome not in self.lista_componentes():
-            # TODO: corrigir para join                         
-            raise NameError(u'O nome do componente não consta no Banco de dados. Os seguintes componentes estão disponíveis no banco de dados: '+'%s, '*(len(self.lista_componentes())-1)%tuple(self.lista_componentes()[0:-1])+'%s.'%self.lista_componentes()[-1])  # Emite um erro com a mensagem inserida no método
+            raise NameError(u'O nome do componente não consta no Banco de dados. Os seguintes componentes estão disponíveis no banco de dados: '+', '.join(self.lista_componentes())+'.')  # Emite um erro com a mensagem inserida no método
 
     def Busca_ID(self):
-        '''
+        u'''
         Método para busca do ID, chave primária, da tabela Componentes no Banco de dados.
         
         ======
@@ -168,34 +164,39 @@ class Componente_Caracterizar:
         
         * Gera o atributo ID em forma de número inteiro
         '''
-        self.cursor.execute('SELECT ID FROM Componentes WHERE  Nome=?',(self.Nome,)) # Busca do ID do componente na tabela Componentes no banco de dados
-        row = self.cursor.fetchall()                                                 # Retorna a linha contendo o ID em forma de lista de tupla
-        self.ID = row[0][0]                                                          # Cria o atributo ID
+        
+        self.__cursor.execute('SELECT ID FROM Componentes WHERE  Nome=?',(self.nome,)) # Busca do ID do componente na tabela Componentes no banco de dados
+        row = self.__cursor.fetchall()                                                 # Retorna a linha contendo o ID em forma de lista de tupla
+        self.ID = row[0][0]                                                            # Cria o atributo ID
 
     def Busca_grupo(self):
-        '''
+        u'''
         Método para busca do grupo funcional do componente.
         
         ======
         Saídas
         ======
         
-        * O método gera o atributo ``Grupo_funcional``. Este é uma ``string`` representando o grupo funcional do componente requerido.
+        * O método gera o atributo ``grupo_funcional``. Este é uma ``string`` representando o grupo funcional do componente requerido.
         '''
 
-        # BUSCA ID_GRUPO NA TABELA COMPONENTES
-        self.cursor.execute('SELECT ID_grupo FROM Componentes WHERE ID=?',(self.ID,))        
-        row = self.cursor.fetchall()        
+        #==============================================================================
+        #         BUSCA ID_GRUPO NA TABELA COMPONENTES
+        #==============================================================================
+        self.__cursor.execute('SELECT ID_grupo FROM Componentes WHERE ID=?',(self.ID,))        
+        row = self.__cursor.fetchall()        
         ID_grupo = row[0][0]
         
-        # BUSCA NOME DO GRUPO PELA ID_GRUPO NA TABELA GRUPO
-        self.cursor.execute('SELECT Nome FROM Grupo WHERE ID=?',(ID_grupo,))        
-        row = self.cursor.fetchall()
-        self.Grupo_funcional = row[0][0]
+        #==============================================================================
+        #         BUSCA NOME DO GRUPO PELA ID_GRUPO NA TABELA GRUPO
+        #==============================================================================
+        self.__cursor.execute('SELECT Nome FROM Grupo WHERE ID=?',(ID_grupo,))        
+        row = self.__cursor.fetchall()
+        self.grupo_funcional = row[0][0]
         
 
     def Busca_FormaEqPsat(self):        
-        '''
+        u'''
         Método para buscar a forma da equação para o cálculo de  Psat no Banco de dados.
                 
         ======
@@ -205,63 +206,70 @@ class Componente_Caracterizar:
         * Este método retorna uma lista contendo as formas de equações, que são números inteiros, para o componente requerido.
         '''
         
-        if self.EqPsat == self.__lista_EqPsat[0]: 
-            self.cursor.execute('SELECT ID_forma FROM Parametros_Psat_Prausnitz_4th_edition WHERE ID_componente=?',(self.ID,)) # Busca as possíveis formas de equação do cálculo da pressão de vapor
-            row = self.cursor.fetchall()         # Cria uma lista de tuplas contendo as formas de equações
-        return [i[0] for i in row]          # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (Os marcadores das formas de equações)
+        if self.eqPsat == self.__lista_EqPsat[0]: 
+            
+            self.__cursor.execute('SELECT ID_forma FROM Parametros_Psat_Prausnitz_4th_edition WHERE ID_componente=?',(self.ID,)) # Busca as possíveis formas de equação do cálculo da pressão de vapor
+            row = self.__cursor.fetchall()         # Cria uma lista de tuplas contendo as formas de equações
+            
+        return [i[0] for i in row]                 # Transforma a lista de tuplas em uma lista com o contéudo das tuplas (Os marcadores das formas de equações)
 
     def Validacao_e_Default_de_EqPsat(self):
-        '''
+        u'''
         Este método valida as entradas de ``ConfigPsat``. Assim são 
         validadas as entradas do método de cálculo de Psat e as formas de equações dos métodos. 
         Se as entradas de ``ConfigPsat`` não passam pela validação, há a emissão de um erro como 
         saída deste método. O erro emitido interrompe a execuçao do programa.
         '''
-        # VALIDAÇÃO DO NOME DO MÉTODO DE CÁLCULO DE PRESSÃO DE VAPOR
+        #==============================================================================
+        #         VALIDAÇÃO DO NOME DO MÉTODO DE CÁLCULO DE PRESSÃO DE VAPOR
+        #==============================================================================
         
         # Caso o método inserido não constar na lista de métodos disponíveis
-        if self.EqPsat not in self.__lista_EqPsat:                      
-            # TODO: join
-            raise NameError(u'O método de cálculo de Psat não consta no Banco de dados. Métodos disponíveis: '+'%s, '*(len(self.__lista_EqPsat)-1)%tuple(self.__lista_EqPsat[0:-1])+'%s.'%self.__lista_EqPsat[-1])
+        if self.eqPsat not in self.__lista_EqPsat:                      
+            raise NameError(u'O método de cálculo de Psat não consta no Banco de dados. Métodos disponíveis: '+', '.join(self.__lista_EqPsat)+'.')
         
         # Caso o método inserido conste na lista de métodos disponíveis:
-        if self.EqPsat == self.__lista_EqPsat[0]:
+        if self.eqPsat == self.__lista_EqPsat[0]:
             dadosbanco = self.Busca_FormaEqPsat()   # Busca as formas de equações disponíveis do banco de dados
+
             if self.nEqPsat != None:                # Caso a forma da equação seja inserida pelo usuário
                 if self.nEqPsat not in dadosbanco:  # Caso a forma da equação inserida não conste no banco
-                    # TODO: join
-                    raise ValueError(u'Foi escolhida a equação %s para calcular a pressão de saturação. Contudo foi inserido uma forma de equação que não consta no Banco de dados (Vide documentação do Banco de dados). Formas de equações disponíveis: '%(self.EqPsat,)+'%d,'*(len(dadosbanco)-1)%tuple(dadosbanco[0:-1])+'%d.'%dadosbanco[-1]) 
+                    raise ValueError(u'Foi escolhida a equação %s para calcular a pressão de saturação. Contudo foi inserido uma forma de equação que não consta no Banco de dados (Vide documentação do Banco de dados). Formas de equações disponíveis: '%(self.eqPsat,)+', '.join(str(forma) for forma in dadosbanco)+'.') 
             
             if self.nEqPsat == None:                # Caso a forma da equação não seja inserida
                 if len(dadosbanco) == 1:            # Caso haja apenas uma forma de equação, dados banco tem tamanho 1
                     self.nEqPsat = dadosbanco[0]    # Como não seja inserida a forma de equação, o programa usará a única forma disponível
                 else: # Caso haja mais de uma forma de equação disponível no banco de dados
-                    raise ValueError(u'Foi escolhida a equação %s para calcular a pressão de saturação. No entanto, é necessário informar expressamente a forma da equaçao (Vide documentação do Banco de dados), visto que há diferentes opções disponíveis: '%(self.EqPsat,)+'%d,'*(len(dadosbanco)-1)%tuple(dadosbanco[0:-1])+'%d.'%dadosbanco[-1]) 
-        
+                    raise ValueError(u'Foi escolhida a equação %s para calcular a pressão de saturação. No entanto, é necessário informar expressamente a forma da equaçao (Vide documentação do Banco de dados), visto que há diferentes opções disponíveis: '%(self.eqPsat,)+', '.join(str(forma) for forma in dadosbanco)+'.') 
         
     def warnings(self):
-        '''        
+        u'''        
         Método para verificar se a temperatura inserida está dentro ou não da 
         faixa de aplicação das fórmulas do calculo da pressão de vapor. 
         Caso não esteja dentro da faixa de aplicabilidade, o programa gerará um aviso. 
         Contudo a execução não será interrompida.
         '''
-        # Verificação se a temperatura inserida está dentro ou não da faixa de aplicabilidade das fórmulas do cálculo de Psat
+        
+        #==============================================================================
+        #         Verificação se a temperatura inserida está dentro ou não da faixa de aplicabilidade das fórmulas do cálculo de Psat
+        #==============================================================================
         if self.T < self.__TminPsat or self.T > self.__TmaxPsat:
             warn(u'A temperatura especificada está fora da faixa de aplicabilidade da equaçao de Psat. A temperatura de pertencer ao intervalo: (%f, '%self.__TminPsat+'%f).'%self.__TmaxPsat) # Emite um aviso. Contudo o programa continua a rodar
  
-       # Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+        #==============================================================================
+        #        Validar se a temperatura especificada é menor do que Tc, se self.nEqPsat = 1.
+        #==============================================================================
         if self.T > self.__TmaxPsat:
             # Sendo a equação de Psat Prausnitz4th
-            if self.EqPsat == self.__lista_EqPsat[0]:  
+            if self.eqPsat == self.__lista_EqPsat[0]:  
                 # sendo a primeira forma disponível
                 if self.nEqPsat == 1:
                     if self.T > self.Tc:
-                        raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.EqPsat,)+' Tc = %f.'%self.Tc)
+                        raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.eqPsat,)+' Tc = %f.'%self.Tc)
 
 
     def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,nEq,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
-        '''
+        u'''
         Método para cálculo da pressão de vapor de componentes puros, conforme [1].
         
         ========
@@ -359,11 +367,13 @@ class Componente_Caracterizar:
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
         
-        self.cursor.execute('SELECT * FROM Propriedades_puras WHERE  ID_componente=?',(self.ID,))
-        row = self.cursor.fetchall() # linha do banco de dados para o ID
+        self.__cursor.execute('SELECT * FROM Propriedades_puras WHERE  ID_componente=?',(self.ID,))
+        row = self.__cursor.fetchall() # linha do banco de dados para o ID
 
+        #==============================================================================
         # PROPRIEDADES DA SUBSTÂNCIA (Tc,Pc,Fator acêtrico(w),Massa molar (MM),radius_giration,Fator de Compressibilidade crítico(Zc)
-        #                             ,Volume molar crítico(Vc),dipole_moment,Parâmetros do UNIQUAC(r,q & ql),d & Td)
+        # ,Volume molar crítico(Vc),dipole_moment,Parâmetros do UNIQUAC(r,q & ql),d & Td)
+        #==============================================================================
         
         self.Tc              = row[0][2]  # Temperatura crítica / K
         self.Pc              = row[0][3]  # Pressão crítica / bar
@@ -380,26 +390,35 @@ class Componente_Caracterizar:
         self.Td              = row[0][14] # Temp_Densidade líquido
         self.polaridade      = row[0][15] # A polaridade do componente
 
-        # PARÂMETROS DO CÁLCULO DE PRESSÃO DE VAPOR (The Properties of Gases & Liquids, 4th edition)
+        #==============================================================================
+        #  PARÂMETROS DO CÁLCULO DE PRESSÃO DE VAPOR (The Properties of Gases & Liquids, 4th edition)
+        #==============================================================================
         
-        if self.EqPsat == self.__lista_EqPsat[0]:
+        if self.eqPsat == self.__lista_EqPsat[0]:
             
-            self.cursor.execute('SELECT * FROM Parametros_Psat_Prausnitz_4th_edition WHERE  ID_componente=? AND ID_forma=?',(self.ID,self.nEqPsat))
-            row = self.cursor.fetchall() 
+            self.__cursor.execute('SELECT * FROM Parametros_Psat_Prausnitz_4th_edition WHERE  ID_componente=? AND ID_forma=?',(self.ID,self.nEqPsat))
+            row = self.__cursor.fetchall() 
             
+            #==============================================================================
             # PARÂMETROS PARA O CÁLCULO DE PSAT FORNECIDO PELO Prausnitz_4th_edition 
+            #==============================================================================
             
             self.VPA             = row[0][3]
             self.VPB             = row[0][4]
             self.VPC             = row[0][5]
             self.VPD             = row[0][6]
             
+            #==============================================================================
             # FAIXA DE TEMPERATURA NA QUAL PODE-SE APLICAR OS CÁLCULOS DE PSAT
+            #==============================================================================
             
             self.__TminPsat = row[0][7]  #  Temperatura mínima de Psat  
             self.__TmaxPsat = row[0][8]  #  Temperatura máxima de Psat
             
+            #==============================================================================
             # VALIDAÇAO DA TEMPERATURA, SE A MESMA PERTENCE AO INTERVALO DE APLICAÇAO
+            #==============================================================================
+            
             self.warnings()    
             self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.nEqPsat,self.Tc,self.Pc)
 
@@ -440,19 +459,27 @@ class Modelo:
         * ``ValidacaoFormaEq``:
             * Método utilizado para validar a forma de equação inserida. Vide documentação do método.
         '''
+        
+        #==============================================================================
+        #         CONEXAO COM O BANCO DE DADOS
+        #==============================================================================
         self.__conector = connect('THERMO_DATA_BANK_EXEMPLO.db')  # Conecta a rotina ao banco de dados
         self.__cursor = self.__conector.cursor()
 
-        # VALIDA SE A ENTRADA Componentes É UM OBJETO DA CLASSE Componente_Caracterizar        
+        #==============================================================================
+        #         VALIDA SE A ENTRADA Componentes É UM OBJETO DA CLASSE Componente_Caracterizar        
+        #==============================================================================
         teste                 = [isinstance(elemento,Componente_Caracterizar) for elemento in Componentes]
         if False in teste:
             raise NameError(u'A entrada Componentes não é um objeto da classe Componente_Caracterizar (Vide documentação da classe).')
             
-        # BUSCA DOS ID'S    
+        #==============================================================================
+        #         BUSCA DOS ID'S    
+        #==============================================================================
         self.__ID_Componentes = [Componente.ID for Componente in Componentes] # Criação da lista com as ID's dos componentes
         
     def Busca_Parametros(self,tabela,coluna,IDFORMA=False):
-        '''
+        u'''
         Método utilizado para busca dos parâmetros dos modelos.
         
         ========
@@ -475,7 +502,7 @@ class Modelo:
         
         * Para os modelos: NRTL, UNIQUAC e Wilson, a IDFORMA deve ser inserida. Como pode ser visto no exemplo a seguir: ::
         
-            Parametro_int = Parametros('ParametroInteracao','UNIQUAC_parametros_interacao_binaria',1)    
+            parametro_int = Parametros('ParametroInteracao','UNIQUAC_parametros_interacao_binaria',1)    
             
         * O retorno deste método é da seguinte forma: ::
         
@@ -495,8 +522,14 @@ class Modelo:
     
         '''
         
-        retorno = zeros((len(self.__ID_Componentes),len(self.__ID_Componentes))).tolist() # Criação da matriz de zeros em forma de lista de listas
-        # Substituição dos elementos da matriz criada
+        #==============================================================================
+        #         Criação da matriz de zeros em forma de lista de listas
+        #==============================================================================
+        retorno = zeros((len(self.__ID_Componentes),len(self.__ID_Componentes))).tolist() 
+        
+        #==============================================================================
+        #         Substituição dos elementos da matriz criada
+        #==============================================================================
         for i,ID_i in enumerate(self.__ID_Componentes):
             for j,ID_j in enumerate(self.__ID_Componentes):
                 if IDFORMA == False:
@@ -510,7 +543,7 @@ class Modelo:
         return retorno
     
     def Busca_e_Validacao_da_faixa_Temp(self,tabela,T,FormaEq):
-        '''
+        u'''
         Método para buscar a faixa de temperatura de aplicação do modelo no Banco de dados e validar se a temperatura inserida está dentro dessa faixa.
         
         ========
@@ -523,19 +556,22 @@ class Modelo:
 
         '''
         
-        # Busca da faixa de temperatura no banco de dados        
-        
+        #==============================================================================
+        #         Busca da faixa de temperatura no banco de dados        
+        #==============================================================================        
         selecao    =  'SELECT TempMin, TempMax FROM '+tabela+' WHERE ID_componente_i=? AND ID_componente_j=? AND ID_forma=?'      
         self.__cursor.execute(selecao,(self.__ID_Componentes[0],self.__ID_Componentes[1],FormaEq)) 
         faixa      =  self.__cursor.fetchall()
 
-        # Validação da temperatura
+        #==============================================================================
+        #         Validação da temperatura
+        #==============================================================================
         if T < faixa[0][0] or T > faixa[0][1]:
             warn(u'A temperatura especificada está fora da faixa de aplicabilidade da mistura utilizada para o modelo desejado. A temperatura deve pertencer ao intervalo: (%f, '%faixa[0][0]+'%f).'%faixa[0][1]) # Emite um aviso quando a temperatura está fora da faixa de aplicação. Contudo o programa continua a rodar
 
         
     def FormaEquacao(self,tabela):
-        '''
+        u'''
         Método usado para realizar a busca das possíveis formas de equação para determinada mistura e determinado modelo.
         
         ========
@@ -560,7 +596,7 @@ class Modelo:
          
          
     def ValidacaoFormaEq(self):
-        '''
+        u'''
         Método utilizado para validar a forma de equação inserida. 
         A validação ocorre com dois casos maiores: caso a forma de equação for inserida e 
         caso não for inserida. No primeiro caso, se a forma de equação inserida não constar
@@ -570,19 +606,20 @@ class Modelo:
         forma de equação será usada. Se houver mais de uma forma de equação disponível para o modelo
         e mistura desejados, há a necessidade de informar expressamente a forma da equação a ser usada.
         '''
-        if self.FormaEq == None:                         # Caso a forma da equação não seja inserida
-            if len(self.lista_forma_eq) == 1:            # Caso haja apenas uma forma de equação, dados banco tem tamanho 1
-                self.FormaEq = self.lista_forma_eq[0]    # Como não seja inserida a forma de equação, o programa usará a única forma disponível
-            else: # Caso haja mais de uma forma de equação disponível no banco de dados
-                raise ValueError(u'Foi escolhido o modelo %s. No entanto, é necessário informar expressamente a forma da equaçao (Vide documentação do Banco de dados), visto que há diferentes opções disponíveis para a mistura desejada: '%(self.tabela,)+'%d, '*(len(self.lista_forma_eq)-1)%tuple(self.lista_forma_eq[0:-1])+'%d.'%self.lista_forma_eq[-1])         
         
-        if self.FormaEq not in self.lista_forma_eq:
-            raise ValueError(u'A forma de equação inserida não consta no Banco de dados para a mistura e o modelo desejados (Vide documentação do Banco de dados). Para o caso requerido, as formas de equações disponíveis são: '+'%d, '*(len(self.lista_forma_eq)-1)%tuple(self.lista_forma_eq[0:-1])+'%d.'%self.lista_forma_eq[-1])
+        if self.formaEq == None:                         # Caso a forma da equação não seja inserida
+            if len(self.lista_forma_eq) == 1:            # Caso haja apenas uma forma de equação, dados banco tem tamanho 1
+                self.formaEq = self.lista_forma_eq[0]    # Como não seja inserida a forma de equação, o programa usará a única forma disponível
+            else: # Caso haja mais de uma forma de equação disponível no banco de dados
+                raise ValueError(u'Foi escolhido o modelo %s. No entanto, é necessário informar expressamente a forma da equaçao (Vide documentação do Banco de dados), visto que há diferentes opções disponíveis para a mistura desejada: '%(self.tabela,)+', '.join(str(model) for model in self.lista_forma_eq)+'.')         
+        
+        if self.formaEq not in self.lista_forma_eq: # Caso a forma da equação inserida não conste no banco de dados
+            raise ValueError(u'A forma de equação inserida não consta no Banco de dados para a mistura e o modelo desejados (Vide documentação do Banco de dados). Para o caso requerido, as formas de equações disponíveis são: '+', '.join(str(model) for model in self.lista_forma_eq)+'.')
                 
 class VIRIAL(Modelo):
    
-    def __init__(self,Componentes,regra_mistura='Hayden_o_Connel',Parametro_int=None):
-        '''
+    def __init__(self,Componentes,regra_mistura='Hayden_o_Connel',parametro_int=None):
+        u'''
         Rotina para busca dos parâmetros da equação Virial, vide [1].
         
         ========
@@ -635,52 +672,62 @@ class VIRIAL(Modelo):
         
         [3] TSONOPOULOS, C.; HEIDMAN, J.L. From the Virial to the cubic equation of state. Fluid Phase Equilib. 57 (1990) 261–276.
         '''
-        # NOME DO MODELO
-        self.Nome_modelo = 'Virial' # Atributo útil para a rotina VLE
         
-        # REGRA DE MISTURA
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'Virial' # Atributo útil para a rotina VLE
+        
+        #==============================================================================
+        #         REGRA DE MISTURA
+        #==============================================================================
         self.regra_mistura = regra_mistura
         self.ValidacaoREGRA()
         
-        # MOSTRAR REGRAS DISPONÍVEIS
+        #==============================================================================
+        #         MOSTRAR REGRAS DISPONÍVEIS
+        #==============================================================================
         if Componentes == None:
-            print u'As seguintes regras de mistura estão disponíveis: '+'%s, '*(len(self.__regras_mistura_disponiveis)-1)%tuple(self.__regras_mistura_disponiveis[0:-1])+'%s.'%self.__regras_mistura_disponiveis[-1]
+            print u'As seguintes regras de mistura estão disponíveis: '+', '.join(self.__regras_mistura_disponiveis)+'.'
             raise NameError(u'Insira uma das regras mostradas na lista.')       
     
-        # BUSCA ID NA CLASSE MÃE (CLASSE MODELO)  
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)  
+        #==============================================================================
         Modelo.__init__(self,Componentes) 
         
-        # REGRA PARA O CÁLCULO DO SEGUNDO COEFICIENTE
-        
+        #==============================================================================
+        #         REGRA PARA O CÁLCULO DO SEGUNDO COEFICIENTE     
+        #==============================================================================
         if self.regra_mistura == 'Tsonopoulos':
             # Parâmetro utilizado em Hayden O'Connel
-            if Parametro_int == None:
+            if parametro_int == None:
                 self.k_int_binaria = self.Busca_Parametros('Tsonopoulos','kij')
             else:
-                self.k_int_binaria  = Parametro_int
+                self.k_int_binaria  = parametro_int
         elif self.regra_mistura == 'Hayden_o_Connel':
             # Parâmetro utilizado em Hayden O'Connel
-            if Parametro_int == None:
+            if parametro_int == None:
                 self.coef_solv  = self.Busca_Parametros('Propriedade_mistura','CoeficienteSolvatacao') # Trasforma a def Parametros da classe Modelo em atributo da classe VIRIAL
             else:
-                self.coef_solv  = Parametro_int
+                self.coef_solv  = parametro_int
         
         self._Modelo__conector.close()
             
     def ValidacaoREGRA(self):
-        '''
+        u'''
         Método para validação da regra de mistura da equação Virial. Caso a regra inserida não constar
         entre as regras disponíveis, ocorrerá um erro.
         '''
         self.__regras_mistura_disponiveis = ['Hayden_o_Connel','Tsonopoulos'] 
         if self.regra_mistura not in self.__regras_mistura_disponiveis:
-            raise NameError(u'A regra de mistura inserida não está disponível. Regras disponíveis: '+'%s,'*(len(self.__regras_mistura_disponiveis )-1)%tuple(self.__regras_mistura_disponiveis[0:-1])+'%s.'%self.__regras_mistura_disponiveis[-1])
+            raise NameError(u'A regra de mistura inserida não está disponível. Regras disponíveis: '+'%, '.join(self.__regras_mistura_disponiveis)+'.')
     
 
 class UNIQUAC(Modelo):
    
-    def __init__(self,Componentes,T,FormaEqUNIQUAC = None,Parametro_int=None):
-        '''
+    def __init__(self,Componentes,T,FormaEqUNIQUAC = None,parametro_int=None):
+        u'''
         Rotina para busca dos parâmetros do modelo UNIQUAC, vide [1].
         
         ========
@@ -695,7 +742,7 @@ class UNIQUAC(Modelo):
         Atributos
         =========
         
-        * ``Parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
+        * ``parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
                 
         =======
         Exemplo 
@@ -727,32 +774,46 @@ class UNIQUAC(Modelo):
         miscible systems. AIChE Journal, v. 21, n. 1, p. 116–128, jan. 1975. ISSN
         0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690210115>
         '''
-        # NOME DO MODELO
-        self.Nome_modelo = 'UNIQUAC' # Atributo útil para a rotina VLE
         
-        # BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'UNIQUAC' # Atributo útil para a rotina VLE
+        
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
         Modelo.__init__(self,Componentes)
         
-        # FORMA DE EQUACAO 
+        #==============================================================================
+        #         FORMA DE EQUACAO 
+        #==============================================================================
         self.FormaEquacao('UNIQUAC_parametros_interacao_binaria')
-        self.FormaEq       = FormaEqUNIQUAC
+        self.formaEq       = FormaEqUNIQUAC
         self.ValidacaoFormaEq()
         
-        # FAIXA DE TEMPERATURA
-        self.Busca_e_Validacao_da_faixa_Temp('UNIQUAC_parametros_interacao_binaria',T,self.FormaEq)
+        #==============================================================================
+        #         FAIXA DE TEMPERATURA
+        #==============================================================================
+        self.Busca_e_Validacao_da_faixa_Temp('UNIQUAC_parametros_interacao_binaria',T,self.formaEq)
     
-        # PARAMETROS DO MODELO
-        if Parametro_int == None:
-            self.Parametro_int = self.Busca_Parametros('UNIQUAC_parametros_interacao_binaria','ParametroInteracao',self.FormaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe UNIQUAC
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro_int == None:
+            self.parametro_int = self.Busca_Parametros('UNIQUAC_parametros_interacao_binaria','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe UNIQUAC
         else:
-            self.Parametro_int = Parametro_int
-         
+            self.parametro_int = parametro_int
+
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================         
         self._Modelo__conector.close()
          
 class NRTL(Modelo):
    
-    def __init__(self,Componentes,T,FormaEqNRTL = None,Parametro_int=None,alpha = None):
-        '''
+    def __init__(self,Componentes,T,FormaEqNRTL = None,parametro_int=None,alpha = None):
+        u'''
         Rotina para busca dos parâmetros do modelo NRTL, vide [1].
         
         ========
@@ -767,7 +828,7 @@ class NRTL(Modelo):
         Atributos
         =========
         
-        * ``Parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada;
+        * ``parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada;
         * ``alpha``: Um lista de listas contendo os parâmetros da mistura desejada.
         
         =======
@@ -799,37 +860,51 @@ class NRTL(Modelo):
         functions for liquid mixtures. AIChE Journal, v. 14, n. 1, p. 135–144, jan. 1968.
         ISSN 0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690140124>.
         '''
-        # NOME DO MODELO
-        self.Nome_modelo = 'NRTL' # Atributo útil para a rotina VLE
         
-        # BUSCA ID NA CLASSE MÃE (CLASSE MODELO)
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'NRTL' # Atributo útil para a rotina VLE
+        
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)
+        #==============================================================================
         Modelo.__init__(self,Componentes)
  
-        # FORMA DE EQUACAO 
+        #==============================================================================
+        #         FORMA DE EQUACAO 
+        #==============================================================================
         self.FormaEquacao('NRTL')                
-        self.FormaEq       = FormaEqNRTL        
+        self.formaEq       = FormaEqNRTL        
         self.ValidacaoFormaEq()
         
-        # FAIXA DE TEMPERATURA
-        self.Busca_e_Validacao_da_faixa_Temp('NRTL',T,self.FormaEq)
+        #==============================================================================
+        #         FAIXA DE TEMPERATURA
+        #==============================================================================
+        self.Busca_e_Validacao_da_faixa_Temp('NRTL',T,self.formaEq)
         
-        # PARAMETROS DO MODELO
-        if Parametro_int == None:
-            self.Parametro_int = self.Busca_Parametros('NRTL','ParametroInteracao',self.FormaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe NRTL
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro_int == None:
+            self.parametro_int = self.Busca_Parametros('NRTL','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe NRTL
         else:
-            self.Parametro_int = Parametro_int
+            self.parametro_int = parametro_int
         
         if alpha == None:
-            self.alpha   = self.Busca_Parametros('NRTL','alphaij',self.FormaEq)              
+            self.alpha   = self.Busca_Parametros('NRTL','alphaij',self.formaEq)              
         else:
             self.alpha   = alpha
-        
+
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================        
         self._Modelo__conector.close()
 
 class WILSON(Modelo):
     
-    def __init__(self,Componentes,T,FormaEqWILSON = None,Parametro_int=None):
-        '''
+    def __init__(self,Componentes,T,FormaEqWILSON = None,parametro_int=None):
+        u'''
         Rotina para busca dos parâmetros do modelo de Wilson, vide [1].
         
         ========
@@ -844,7 +919,7 @@ class WILSON(Modelo):
         Atributos
         =========
         
-        * ``Parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
+        * ``parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
         
         =======
         Exemplo 
@@ -876,32 +951,46 @@ class WILSON(Modelo):
         127–130, jan. 1964. ISSN 0002-7863. Disponível em: <http://pubs.acs.org/doi/abs-
         /10.1021/ja01056a002>
         '''
-        # NOME DO MODELO
-        self.Nome_modelo = 'Wilson' # Atributo útil para a rotina VLE
         
-        # BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'Wilson' # Atributo útil para a rotina VLE
+        
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
         Modelo.__init__(self,Componentes) 
        
-        # FORMA DE EQUACAO        
+        #==============================================================================
+        #         FORMA DE EQUACAO        
+        #==============================================================================
         self.FormaEquacao('Wilson')                
-        self.FormaEq       = FormaEqWILSON                                
+        self.formaEq       = FormaEqWILSON                                
         self.ValidacaoFormaEq()
         
-        # FAIXA DE TEMPERATURA
-        self.Busca_e_Validacao_da_faixa_Temp('Wilson',T,self.FormaEq)
+        #==============================================================================
+        #         FAIXA DE TEMPERATURA
+        #==============================================================================
+        self.Busca_e_Validacao_da_faixa_Temp('Wilson',T,self.formaEq)
 
-        # PARAMETROS DO MODELO
-        if Parametro_int == None:
-                    self.Parametro_int = self.Busca_Parametros('Wilson','ParametroInteracao',self.FormaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe WILSON
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro_int == None:
+                    self.parametro_int = self.Busca_Parametros('Wilson','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe WILSON
         else:
-            self.Parametro_int = Parametro_int
+            self.parametro_int = parametro_int
 
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================
         self._Modelo__conector.close()
         
 class Van_Laar(Modelo):
     
-    def __init__(self,Componentes,Parametro=None):
-        '''
+    def __init__(self,Componentes,parametro=None):
+        u'''
         Rotina para busca dos parâmetros do modelo de Wilson, vide [1].
         
         ========
@@ -914,7 +1003,7 @@ class Van_Laar(Modelo):
         Atributos
         =========
         
-        * ``Parametro``: Uma lista de listas contendo os parâmetros do modelo de Van Laar para a mistura desejada.
+        * ``parametro``: Uma lista de listas contendo os parâmetros do modelo de Van Laar para a mistura desejada.
         
         =======
         Exemplo 
@@ -938,16 +1027,25 @@ class Van_Laar(Modelo):
         [1] VAN LAAR, J. J. The Vapor pressure of binary mixtures. Z. Phys.
         Chem. 1910, 72, 723−751.
         '''
-        # NOME DO MODELO
-        self.Nome_modelo = 'Van Laar' # Atributo útil para a rotina VLE
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'Van Laar' # Atributo útil para a rotina VLE
         
-        # BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
+        #==============================================================================
         Modelo.__init__(self,Componentes) 
 
-        # PARAMETROS DO MODELO
-        if Parametro == None:
-            self.Parametro = self.Busca_Parametros('Van_Laar','Parametro') # Trasforma a def Parametros da classe Modelo em atributo da classe Van_Laar
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro == None:
+            self.parametro = self.Busca_Parametros('Van_Laar','Parametro') # Trasforma a def Parametros da classe Modelo em atributo da classe Van_Laar
         else:
-            self.Parametro = Parametro
-
+            self.parametro = parametro
+            
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================
         self._Modelo__conector.close()
