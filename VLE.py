@@ -184,11 +184,11 @@ class VLE:
         * ``Coeficiente_Fugacidade``:        
             * ``coefFug`` (list): O atributo gerado representa os coeficientes de atividade dos componentes baseado nas condições de entrada da classe VLE;
             * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
-        * ``PontoBolha``:
+        * ``PontoBolha_P`` & ``PontoBolha_T`` :
             * ``Bolha`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
             * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
-        * ``PontoOrvalho``:
+        * ``PontoOrvalho_P`` & ``PontoOrvalho_T`` :
             * ``Orvalho`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
             * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
@@ -209,11 +209,15 @@ class VLE:
             * Método para realizar o cálculo de flash, vide documentação do método.
         * ``Phisat``:
             Método que realiza o cálculo de phisat (coeficiente de fugacidade nas condições de saturação).
-        * ``PontoBolha``:
-            Método para realizar o cálculo do ponto de bolha.
-        * ``PontoOrvalho``:
-            Método para realizar o cálculo do ponto de orvalho.
-        
+        * ``PontoBolha_P``:
+            Método para realizar o cálculo do ponto de bolha dado x e T.
+        * ``PontoBolha_T``:
+            Método para realizar o cálculo do ponto de bolha dado x e P.
+        * ``PontoOrvalho_P``:
+            Método para realizar o cálculo do ponto de orvalho dado y e T.
+        * ``PontoOrvalho_T``:
+            Método para realizar o cálculo do ponto de orvalho dado y e P.
+            
         =========
         Exemplo 1
         =========
@@ -232,7 +236,7 @@ class VLE:
             model_vap = VIRIAL(Componentes)
             model_liq = UNIQUAC(Componentes,330.0,1)
             
-            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            CalculoBolha = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
             
         O acesso do valor da pressão do ponto de bolha é da seguinte forma:
         
@@ -255,7 +259,7 @@ class VLE:
             model_vap = VIRIAL(Componentes)
             model_liq = UNIQUAC(Componentes,330.0,1)
             
-            CalculoOrvalho = VLE('PontoOrvalho',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            CalculoOrvalho = VLE('PontoOrvalho_P',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
             
         O acesso do valor da pressão do ponto de orvalho é da seguinte forma:
         
@@ -358,49 +362,53 @@ class VLE:
         self.Temp        = Temp    # Temperatura em K
         
         # Estimativas iniciais
-#        if estgama == None:        
-#            self.estgama = [1.0]*len(self.Componente) # estimativa para o coeficiente de atividade
-#        else:
-#            self.estgama = estgama
-#            
-#        self.estBeta = estBeta # estimativa para a fração entre líquido e vapor
+
+        if estgama == None:        
+            self.estgama = [1.0]*len(self.Componente) # estimativa para o coeficiente de atividade
+        else:
+            self.estgama = estgama
+            
+        if estphi == None:
+            self.estphi  = [1.0]*len(self.Componente)  # estimativa para o coeficiente de fugacidade
+        else:
+            self.estphi = estphi
+
+        if self.model_liq.nome_modelo == 'UNIQUAC':                
+            self.coordnumber     = z_coordenacao # Número de coordenação do componente               
+            
+        self.estBeta = estBeta # estimativa para a fração entre líquido e vapor
         self.toleq   = toleq   # Tolerância do equilíbrio
         self.tolAlg = tolAlg   # Tolerância do algortimo            
         self.maxiter = maxiter # Número máximo de iterações
             
-        if Algoritmo == 'Flash':
             
-            self.Flash()
+        if Algoritmo == 'Coeficiente_Fugacidade':
             
-        elif Algoritmo == 'PontoBolha':
-                                   
-            if estphi == None:
-                self.estphi  = [1.0]*len(self.Componente)  # estimativa para o coeficiente de fugacidade
-            else:
-                self.estphi = estphi
-                
-            if self.model_liq.nome_modelo == 'UNIQUAC':                
-                self.coordnumber     = z_coordenacao # Número de coordenação do componente               
+            self.coefFug = self.Coeficiente_Fugacidade(self.z,self.Pressao,self.Temp)                        
             
-            self.PontoBolha(self.z,self.Temp)
-
-        elif Algoritmo == 'PontoOrvalho':
-            
-            if self.model_liq.nome_modelo == 'UNIQUAC':                
-                self.coordnumber     = z_coordenacao # Número de coordenação do componente  
-            
-            self.PontoOrvalho(self.z,self.Temp)
-
         elif Algoritmo == 'Coeficiente_Atividade':
-            
-            if self.model_liq.nome_modelo == 'UNIQUAC':                
-                self.coordnumber     = z_coordenacao # Número de coordenação do componente                            
                         
             self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
-                
-        elif Algoritmo == 'Coeficiente_Fugacidade':
+        
+        elif Algoritmo == 'PontoBolha_P':
+
+            self.PontoBolha_P(self.z,self.Temp)
+
+        elif Algoritmo == 'PontoBolha_T':
             
-            self.coefFug = self.Coeficiente_Fugacidade(self.z,self.Pressao,self.Temp)
+            self.PontoBolha_T(self.z,self.Pressao)
+            
+        elif Algoritmo == 'PontoOrvalho_P':
+                        
+            self.PontoOrvalho_P(self.z,self.Temp)
+        
+        elif Algoritmo == 'PontoOrvalho_T':
+            
+            self.PontoOrvalho_T(self.z,self.Pressao)
+
+        elif Algoritmo == 'Flash':
+            
+            self.Flash()
 
     def Second_Virial_Coef(self):
         '''
@@ -725,11 +733,14 @@ class VLE:
         if self.model_liq.nome_modelo == 'UNIQUAC':
             
             if self.model_liq.formaEq == 1:
+#                R = 8.314462 # em J · K−1 · mol−1
                 # Caso tenha em mãos a diferenca do parametro a. A formaEq 1 é a mais recorrente.
                 a     = self.model_liq.parametro_int
     
-                tau   = [[exp(-a[i][j]/T) for j in xrange(self.NC)] for i in xrange(self.NC)]
+                tau   = [[exp(-a[i][j]/(T)) for j in xrange(self.NC)] for i in xrange(self.NC)] 
+                
                 phi   = [self.Componente[i].r  * x[i] / sum([self.Componente[j].r  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
+                
                 teta  = [self.Componente[i].q  * x[i] / sum([self.Componente[j].q  * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
                 tetal = [self.Componente[i].ql * x[i] / sum([self.Componente[j].ql * x[j] for j in xrange(self.NC)])        for i in xrange(self.NC)]
                 l     = [(self.coordnumber/2.0)*(self.Componente[i].r - self.Componente[i].q) - (self.Componente[i].r - 1)  for i in xrange(self.NC)]
@@ -924,8 +935,8 @@ class VLE:
             phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Psat,T)[i])
         self.phisat = phisat
         
-
-    def PontoBolha(self,x,T):
+    
+    def PontoBolha_P(self,x,T):
         '''
         Módulo para calcular o ponto de bolha segundo [1] e [2], quando a temperatura e composição são conhecidas. 
         
@@ -933,7 +944,8 @@ class VLE:
         Entradas
         ========
         
-        * T (float): Temperatura em Kelvin.
+        * T (float): Temperatura em Kelvin;
+        * x (list): Composição da fase líquida.
             
         ======
         Saídas
@@ -949,32 +961,43 @@ class VLE:
         
         [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.].                 
         ''' 
-        
+        #==============================================================================
+        #------------------ Estimativas iniciais --------------------------------------
+        #==============================================================================                
         self.PhiSat(T)
         P        = []
         coefAct  = self.Coeficiente_Atividade(x,T)
+        # Caracterização da fase líquida
         liquido  = Fase(composicao=x,coeffug=None,coefAct = coefAct)
         coeffug  = self.estphi
         
         cont   = 0; deltaP = 10000
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
+            # Atualização do valor de P por VLE
             P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
+            # Cálculo de y por VLE
             y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            # Atualização de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
+            
             deltaP = abs(P[cont] - P[cont-1])
             cont+=1
+            
+        # Caracterização da fase vapor
         vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
         self.Bolha = Condicao(P[cont-1],T,liquido,vapor,0.0)
 
-    def PontoOrvalho(self,y,T):
+    def PontoBolha_T(self,x,P):
         ''' 
-        Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a temperatura e composição são conhecidas.
+        Módulo para calcular o ponto de bolha segundo [1] e [2], quando a pressão e composição são conhecidas.
 
         ========
         Entradas
         ========
         
-        * T (float): Temperatura em Kelvin.
+        
+        * P (float): Pressão em bar;
+        * x (list): Composição da fase líquida.
         
         ======
         Saídas
@@ -992,24 +1015,162 @@ class VLE:
         [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical 
         Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
         ''' 
+        #==============================================================================
+        #------------------ Estimativas iniciais --------------------------------------
+        #==============================================================================
+  
+        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
         
+        coeffug  = self.estphi
+        cont   = 0; deltaT = 10        
+        while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
+            # cálculo da pressão de saturação P_i^(sat) por Prausnitz
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            # Cálculo de phisat
+            self.PhiSat(T[cont])
+            # Cálculo de gamma por modelos termodinâmicos
+            coefAct  = self.Coeficiente_Atividade(x,T[cont])            
+            # Caracterização da fase líquida
+            liquido  = Fase(composicao=x,coeffug=None,coefAct = coefAct)            
+            # Predição de y por VLE
+            y        = [liquido.comp[i]*liquido.coefAct[i]*psat_ini[i]*self.phisat[i]/(coeffug[i]*P) for i in xrange(self.NC)]            
+            # Atualização de phi por EoS
+            coeffug  = self.Coeficiente_Fugacidade(y,P,T[cont])
+            # Cálculo da pressão de saturação P_j^(sat) por VLE
+            psat     = [P/(sum([(x[i]*liquido.coefAct[i]*self.phisat[i]*psat_ini[i])/(psat_ini[j]*coeffug[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
+            # Atualização do valor de T por Prausnitz
+            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].nEqPsat,self.Componente[1].Tc,self.Componente[1].Pc))
+            # Atualização do valor de deltaT
+            deltaT  = abs((T[cont+1] - T[cont])/T[cont])
+            cont+=1
+            
+        # Caracterização da fase vapor
+        vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
+        self.Bolha = Condicao(P,T[cont],liquido,vapor,0.0)
+        print self.Bolha.Temp
+    def PontoOrvalho_P(self,y,T):
+        ''' 
+        Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a temperatura e composição são conhecidas.
+
+        ========
+        Entradas
+        ========
+        
+        
+        * T (float): Temperatura em Kelvin;
+        * y (list): Composição da fase vapor.
+        
+        ======
+        Saídas
+        ======
+        
+        * Um objeto da classe ``Condicao``, vide documentação da classe.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid 
+        and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+        
+        [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical 
+        Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
+        ''' 
+        #==============================================================================
+        #------------------ Estimativas iniciais --------------------------------------
+        #==============================================================================        
         self.PhiSat(T)
         P        = [self.Pressao]
-        coeffug  = [1.0,1.0]
-        coefAct  = [1.0,1.0]        
+        coeffug  = self.estphi
+        coefAct  = self.estgama        
         cont   = 1; deltaP = 10000
+        
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
+            # Atualização do valor de P por VLE
             P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i])    for i in xrange(self.NC)]))
+            # Cálculo de x por VLE
             x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i]) for i in xrange(self.NC)]
+            # Cálculo de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
+            # Cálculo de gamma por modelos termodinamicos
             coefAct = self.Coeficiente_Atividade(x,T)
             
             deltaP = abs(P[cont] - P[cont-1])
             cont+=1
-
+        # Caracterização da fase líquida
         liquido = Fase(composicao=x,coeffug=None,coefAct = coefAct)
+        # Caracterização da fase vapor
         vapor   = Fase(composicao=y,coeffug=coeffug,coefAct = None)
         self.Orvalho = Condicao(P[cont-1],T,liquido,vapor,1.0)
+        
+    def PontoOrvalho_T(self,y,P):
+        ''' 
+        Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a pressão e composição são conhecidas.
+
+        ========
+        Entradas
+        ========
+        
+        * P (float): Pressão em bar;
+        * y (list): Composição da fase vapor.
+        
+        ======
+        Saídas
+        ======
+        
+        * Um objeto da classe ``Condicao``, vide documentação da classe.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid 
+        and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+        
+        [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical 
+        Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
+        ''' 
+        #==============================================================================
+        #------------------ Estimativas iniciais --------------------------------------
+        #==============================================================================
+        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
+        
+        coeffug  = [1.0,1.0]
+        coefAct  = [[1.0,1.0]]
+        cont   = 0; deltaT = 10
+        
+        while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
+            # cálculo da pressão de saturação P_i^(sat) por Prausnitz
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            # Cálculo de phisat
+            self.PhiSat(T[cont])            
+            # Atualização de phi por EoS
+            coeffug  = self.Coeficiente_Fugacidade(y,P,T[cont])
+            # Loop interno para o cálculo de gamma
+            contador = 0 ; delta_gamma = 10
+            while (delta_gamma > self.tolAlg) and (contador<self.maxiter+1):
+                # Predição de x por equilíbrio
+                x_calc = [y[i]*coeffug[i]*P/(coefAct[contador][i]*psat_ini[i]*self.phisat[i]) for i in xrange(self.NC)]
+                # Normalização do valor de x
+                x_norm = [x_calc[i]/(sum([x_calc[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+                # Atualização do valor de gamma por modelos termodinâmicos
+                coefAct.append(self.Coeficiente_Atividade(x_norm,T[cont]))
+                # Atualização do valor de delta_gamma
+                delta_gamma  = abs((coefAct[contador+1][0] - coefAct[contador][0])/coefAct[contador][0])
+                contador+=1 
+                
+            # Caracterização da fase líquida    
+            liquido  = Fase(composicao=x_norm,coeffug=None,coefAct = coefAct[contador])            
+            # Cálculo da pressão de saturação P_j^(sat) por VLE
+            psat     = [P*(sum([(y[i]*coeffug[i]*psat_ini[j])/(liquido.coefAct[i]*self.phisat[i]*psat_ini[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
+            # Atualização do valor de T por Prausnitz
+            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].nEqPsat,self.Componente[1].Tc,self.Componente[1].Pc))
+            # Atualização do valor de deltaT
+            deltaT  = abs((T[cont+1] - T[cont])/T[cont])
+            cont+=1
+        # Caracterização da fase vapor
+        vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
+        self.Orvalho = Condicao(P,T[cont],liquido,vapor,1.0)
         
     def Flash(self):
         '''
@@ -1040,6 +1201,7 @@ class VLE:
 		y = range(self.NC)
 		
 		# Cálculo de K
+  
 		K = [(coefAct[i]*self.Componente[i].Psat) / (coefFug[i]*self.Pressao) for i in xrange(self.NC)]
 		
 		# Cálculo de F e sua derivada em relação à fração de vapor
@@ -1105,7 +1267,7 @@ class VLE:
 	    self.wFlash = 'Não é possível executar o Flash'
             self.Flash = None
         
-    def Predicao(self,T):
+    def Predicao(self,T = None, P = None):
         '''
         Metodo para caracterização dos eixos Ox e Oy para a realização dos gráficos.
         
@@ -1113,7 +1275,8 @@ class VLE:
         Entradas
         ========
         
-        * T (float): Temperatura em Kelvin.
+        * T (float): Temperatura em Kelvin;
+        * P (float): Pressão em bar.
         
         ======
         Saídas
@@ -1124,40 +1287,81 @@ class VLE:
         * ``Composicao_y1``: Um array que contém as composições do componente(1) na fase de vapor;
         * ``Composicao_y2``: Um array que contém as composições do componente(2) na fase de vapor;
         * ``Pressao_Ponto_Bolha``: Um array que contém as pressões do ponto de bolha;
-        * ``Pressao_Ponto_Orvalho``: Um array que contém as pressões do ponto de orvalho.
+        * ``Temperatura_Ponto_Bolha``: Um array que contém as temperaturas do ponto de bolha;
+        * ``Pressao_Ponto_Orvalho``: Um array que contém as pressões do ponto de orvalho;
+        * ``Temperatura_Ponto_Orvalho``: Um array que contém as temperaturas do ponto de orvalho.
         '''
-        # Criação do eixo X para fazer os gráficos
-        x1 = linspace(1e-13,0.1,1000) 
-        x2 = linspace(0.1,0.9,500)
-        x3 = linspace(0.9,0.9999999999999,1000)
-        
-        x_1 = concatenate((x1,x2,x3))
-        
-        x_2 = array([1-a for a in x_1]) # Cálcula os valores de x_2 baseados nos valores de x_1
-         
-        y_1  = []        
-        y_2  = []
-        Pressao_Ponto_Bolha   = []
-        Pressao_Ponto_Orvalho = []
-        
-        # Realiza o cálculo do ponto de bolha e de orvalho de cada par de concetrações
-        for i  in xrange(len(x_2)):
+        if P == None:
+            # Criação do eixo X para fazer os gráficos
+            x1 = linspace(1e-13,0.1,1000) 
+            x2 = linspace(0.1,0.9,500)
+            x3 = linspace(0.9,0.9999999999999,1000)
             
-            # Cálculos
-            self.PontoBolha([x_1[i],x_2[i]],T)
-            self.PontoOrvalho([x_1[i],x_2[i]],T)
-                      
-            # Preenchimento das listas          
-            y_1.append(self.Bolha.vapor.comp[0])
-            y_2.append(self.Bolha.vapor.comp[1])
-            Pressao_Ponto_Bolha.append(self.Bolha.Pressao)
-            Pressao_Ponto_Orvalho.append(self.Orvalho.Pressao)
+            x_1 = concatenate((x1,x2,x3))
+            
+            x_2 = array([1-a for a in x_1]) # Cálcula os valores de x_2 baseados nos valores de x_1
+            
+            y_1  = []        
+            y_2  = []
+            Pressao_Ponto_Bolha   = []
+            Pressao_Ponto_Orvalho = []
+            
+            # Realiza o cálculo do ponto de bolha e de orvalho de cada par de concetrações
+            for i  in xrange(len(x_2)):
+                
+                # Cálculos
+                self.PontoBolha_P([x_1[i],x_2[i]],T)
+                self.PontoOrvalho_P([x_1[i],x_2[i]],T)
+                          
+                # Preenchimento das listas          
+                y_1.append(self.Bolha.vapor.comp[0])
+                y_2.append(self.Bolha.vapor.comp[1])
+                Pressao_Ponto_Bolha.append(self.Bolha.Pressao)
+                Pressao_Ponto_Orvalho.append(self.Orvalho.Pressao)
+            
+            # Composições
+            self.Composicao_x1 = x_1
+            self.Composicao_x2 = x_2
+            self.Composicao_y1 = array(y_1)
+            self.Composicao_y2 = array(y_2)
+            # Pressões
+            self.Pressao_Ponto_Bolha   = array(Pressao_Ponto_Bolha)
+            self.Pressao_Ponto_Orvalho = array(Pressao_Ponto_Orvalho)
         
-        # Composições
-        self.Composicao_x1 = x_1
-        self.Composicao_x2 = x_2
-        self.Composicao_y1 = array(y_1)
-        self.Composicao_y2 = array(y_2)
-        # Pressões
-        self.Pressao_Ponto_Bolha   = array(Pressao_Ponto_Bolha)
-        self.Pressao_Ponto_Orvalho = array(Pressao_Ponto_Orvalho)
+        else:
+            # Criação do eixo X para fazer os gráficos
+            y1 = linspace(1e-13,0.1,1000) 
+            y2 = linspace(0.1,0.9,500)
+            y3 = linspace(0.9,0.9999999999999,1000)
+            
+            y_1 = concatenate((y1,y2,y3))
+            y_2 = array([1-a for a in y_1]) # Cálcula os valores de y_2 baseados nos valores de y_1
+            
+            x_1  = []        
+            x_2  = []
+            Temperatura_Ponto_Bolha   = []
+            Temperatura_Ponto_Orvalho = []
+            
+            # Realiza o cálculo do ponto de bolha e de orvalho de cada par de concetrações
+            for i  in xrange(len(y_2)):
+                
+                # Cálculos
+                self.PontoBolha_T([y_1[i],y_2[i]],P)
+                self.PontoOrvalho_T([y_1[i],y_2[i]],P)
+                          
+                # Preenchimento das listas          
+                x_1.append(self.Bolha.liquido.comp[0])
+                x_2.append(self.Bolha.liquido.comp[1])
+                Temperatura_Ponto_Bolha.append(self.Bolha.Temp)
+                Temperatura_Ponto_Orvalho.append(self.Orvalho.Temp)
+            
+            # Composições
+            self.Composicao_y1 = y_1
+            self.Composicao_y2 = y_2
+            self.Composicao_x1 = array(x_1)
+            self.Composicao_x2 = array(x_2)
+            # Temperaturas
+            self.Temperatura_Ponto_Bolha   = array(Temperatura_Ponto_Bolha)
+            self.Temperatura_Ponto_Orvalho = array(Temperatura_Ponto_Orvalho)
+        
+            

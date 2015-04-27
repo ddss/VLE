@@ -9,7 +9,7 @@ from matplotlib.pyplot import plot, xlabel, ylabel, title, xlim, legend, grid, s
 
 class Graficos:
 
-    def __init__(self,Diagrama,T,Componentes,Eixo_X1,Eixo_Y1,Eixo_Y2 = None,Eixo_X2 = None):
+    def __init__(self,Diagrama,T,P,Componentes,Eixo_X1,Eixo_Y1,Eixo_Y2 = None, Eixo_X2 = None):
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
         
@@ -17,8 +17,9 @@ class Graficos:
         Entradas
         ========
 
-        * Diagrama (str): O tipo de diagrama ou gráfico que se pretende realizar;
+        * Diagrama (str): O tipo de diagrama ou gráficor que se pretende realizar;
         * T (float): A temperatura da mistura em Kelvin;
+        * P (float): A pressão em bar;
         * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
         * Eixo_X1 (array): Contém os valores do eixo x, entrada obrigratória;
         * Eixo_Y1 (array): Contém os valores do eixo y, entrada obrigratória;
@@ -61,7 +62,7 @@ class Graficos:
             
         Em seguida, pode plotado o diagrama Pxy, conforme consta em [1].  ::
         
-            Graficos('Pxy',330.0,Componentes, Calculos.Composicao_x1,Calculos.Pressao_Ponto_Bolha, Calculos.Pressao_Ponto_Orvalho)
+            Graficos('Pxy',330.0,Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho)
         
         =========
         Exemplo 2        
@@ -88,7 +89,7 @@ class Graficos:
         
         Em seguida, pode plotado o diagrama xy para os componentes, conforme consta em [1].  ::
         
-            Graficos('xy',330.0,Componentes, Calculos.Composicao_x1,Calculos.Composicao_y1,Calculos.Composicao_y2,Calculos.Composicao_x2)  
+            Graficos('xy',330.0,Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2)  
         
         Os gráficos são gerados automaticamente.
         
@@ -100,6 +101,7 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.        
         '''
         self.T  = T
+        self.P  = P
         self.x1 = Eixo_X1
         self.x2 = Eixo_X2
         self.y1 = Eixo_Y1
@@ -141,12 +143,41 @@ class Graficos:
         
         xlabel(u'x,y')
         ylabel(u'Pressão(bar)')
-        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].Nome,self.Componentes[1].Nome,self.T))
+        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
         grid() # Adiciona a grade ao gráfico
         show()
 
+    def T_x_y(self):
+        '''
+        Método para criação do diagrama Txy, temperatura em função das composições, vide [1].
+        
+        ======
+        Saídas
+        ======
+        
+        * Gera o diagrama Txy.
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
+        Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
+
+        '''
+        plot(self.x1,self.y1,'-')
+        plot(self.x1,self.y2,'-')
+        
+        xlabel(u'x,y')
+        ylabel(u'Pressão(bar)')
+        title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.P))
+        xlim(0,1)
+        legend(['Bubble Temperature','Dew Temperature'],loc='best')
+        grid() # Adiciona a grade ao gráfico
+        show()
+        
     def x_y(self):
         '''
         Método para criação do diagrama xy, composição da fase de vapor em função 
@@ -169,9 +200,9 @@ class Graficos:
         fig = figure() # Adiciona a figura
         fig.add_subplot(111)
         plot(self.x1,self.y1,'-') 
-        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[0].Nome))
-        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[0].Nome))
-        title('Diagrama xy para {:s} a {:.1f}K'.format(self.Componentes[0].Nome,self.T))
+        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[0].nome))
+        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[0].nome))
+        title('Diagrama xy para {:s} a {:.1f}K'.format(self.Componentes[0].nome,self.T))
         xlim(0,1) # Dimensiona a imagem do gráfico
         
         grid() # Adiciona a grade ao gráfico
@@ -179,9 +210,9 @@ class Graficos:
         fig = figure() # Adiciona a figura
         fig.add_subplot(111)
         plot(self.x2,self.y2,'-')
-        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[1].Nome))
-        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[1].Nome))
-        title('Diagrama xy para {:s} a {:.1f}K'.format(self.Componentes[1].Nome,self.T))
+        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[1].nome))
+        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[1].nome))
+        title('Diagrama xy para {:s} a {:.2f}K'.format(self.Componentes[1].nome,self.T))
         xlim(0,1) # Dimensiona a imagem do gráfico
         
         grid() # Adiciona a grade ao gráfico

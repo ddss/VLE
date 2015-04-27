@@ -22,7 +22,8 @@ class Componente_Caracterizar:
                 
                 >>> Componente_Caracterizar(None) 
         
-        * T: Temperatura em Kelvin                
+        * T: Temperatura em Kelvin;
+        * P: A pressão dada em bar;
         * ConfigPsat ('tuple' or 'list'): São as opções para o cálculo da pressão de vapor. Primeiro argumento são as referências disponíveis ('Prausnitz4th') e o segundo o número da equação conforme consta no Banco de dados.
         
         =========
@@ -333,6 +334,77 @@ class Componente_Caracterizar:
     
         # Todos os Pvp são dados em bar
         return Pvp
+        
+    def Tsat_Prausnitz_4th(self,VPA,VPB,VPC,VPD,P,nEq,Tc=None,Pc=None,Tsat_ini=500,tol=1e-10):
+        u'''
+        Método para cálculo da temperatura de componentes puros, conforme [1].
+        
+        ========
+        Entradas
+        ========
+        
+        * VPA (float): Parâmetro VPA;
+        * VPB (float): Parâmetro VPB;
+        * VPC (float): Parâmetro VPC;
+        * VPD (float): Parâmetro VPD;
+        * P (float): Pressão em bar;
+        * nEq (int): Número de identificação da forma (ou tipo) de equação;
+        * Tc (float): Temperatura crítica em Kelvin; 
+        * Pc (float): Pressão crítica em bar
+        * Pvp_ini: Estimativa inicial para a pressão de vapor, quando nEq = 2 (Equação implícta).
+        * tol: teolerância para o cálculo da raiz da equação nEq = 2 (Equação implícta)
+        
+        ================
+        Valores default 
+        ================        
+        
+        * Tsat_ini = 500 K
+        * tol     = 1e-10
+        
+        ======
+        Saídas
+        ======
+        
+        * Retorna a temperatura de saturação em K
+        
+        ===========
+        Referências
+        ===========
+        
+        [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
+        '''
+    
+        # Equações implícitas
+        def Eq1(T,Pc,Tc,VPA,VPB,VPC,VPD,P):
+            Pc  = Pc # Bar
+            x   = 1 - T/Tc
+            Res = exp((VPA*x+VPB*(x**1.5)+VPC*(x**3.0)+VPD*(x**6.0))/(1.0-x))*Pc - P
+            return Res
+        
+        def Eq2(T,VPA,VPB,VPC,VPD,P): 
+            Res = VPA - VPB/T + VPC*log(T) + VPD*P/(T**2.0)-log(P) # Vide [1]
+            return Res
+        
+        def Eq3(T,VPA,VPB,VPC,P):
+            Res = exp(VPA-VPB/(T+VPC)) - P # Vide [1]
+            return Res
+            
+        if self.nEqPsat == 1: # Cálculo de Psat quando nEq = 1
+            Tsat_ini = Tsat_ini # K, Estimativa inicial
+            Resul   = root(Eq1,Tsat_ini,args=(Pc,Tc,VPA,VPB,VPC,VPD,P),tol=tol) # Determinação das raízes da equação implícia
+            return Resul.x[0] # Retorno
+            
+        elif self.nEqPsat == 2:  # Cálculo de Psat quando nEq = 2
+            Tsat_ini = Tsat_ini # K, Estimativa inicial
+            Resul   = root(Eq2,Tsat_ini,args=(VPA,VPB,VPC,VPD,P),tol=tol) # Determinação das raízes da equação implícia
+            return Resul.x[0] # Retorno
+    
+        elif self.nEqPsat == 3: # Cálculo de Psat quando nEq = 3
+            Tsat_ini = Tsat_ini # K, Estimativa inicial
+            Resul   = root(Eq3,Tsat_ini,args=(VPA,VPB,VPC,P),tol=tol) # Determinação das raízes da equação implícia
+            return Resul.x[0] # Retorno
+    
+        # Todos os Tsat são em Kelvin
 
 
     def Propriedade(self):
@@ -421,7 +493,8 @@ class Componente_Caracterizar:
             
             self.warnings()    
             self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.nEqPsat,self.Tc,self.Pc)
-
+        
+        
 class Modelo:
 
     def __init__(self,Componentes):
