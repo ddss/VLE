@@ -142,7 +142,7 @@ class Graficos:
         plot(self.x1,self.y2,'-')
         
         xlabel(u'x,y')
-        ylabel(u'Pressão(bar)')
+        ylabel(u'Pressão/bar')
         title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
@@ -171,7 +171,7 @@ class Graficos:
         plot(self.x1,self.y2,'-')
         
         xlabel(u'x,y')
-        ylabel(u'Pressão(bar)')
+        ylabel(u'Temperatura/K')
         title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.P))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')

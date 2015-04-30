@@ -932,7 +932,7 @@ class VLE:
             for j in xrange(self.NC):
                 if i != j:
                     comp[j] = fator*0.00000001
-            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Psat,T)[i])
+            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc),T)[i])
         self.phisat = phisat
         
     
