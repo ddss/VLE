@@ -974,9 +974,9 @@ class VLE:
         cont   = 0; deltaP = 10000
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
-            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
+            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
             # Cálculo de y por VLE
-            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Psat*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
             # Atualização de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
             
@@ -1018,7 +1018,8 @@ class VLE:
         #==============================================================================
         #------------------ Estimativas iniciais --------------------------------------
         #==============================================================================
-  
+  	# Normalização do valor de x
+        x = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
         T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
         
         coeffug  = self.estphi
@@ -1034,6 +1035,8 @@ class VLE:
             liquido  = Fase(composicao=x,coeffug=None,coefAct = coefAct)            
             # Predição de y por VLE
             y        = [liquido.comp[i]*liquido.coefAct[i]*psat_ini[i]*self.phisat[i]/(coeffug[i]*P) for i in xrange(self.NC)]            
+            # Normalização do valor de y
+            y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Atualização de phi por EoS
             coeffug  = self.Coeficiente_Fugacidade(y,P,T[cont])
             # Cálculo da pressão de saturação P_j^(sat) por VLE
@@ -1047,7 +1050,7 @@ class VLE:
         # Caracterização da fase vapor
         vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
         self.Bolha = Condicao(P,T[cont],liquido,vapor,0.0)
-        print self.Bolha.Temp
+        
     def PontoOrvalho_P(self,y,T):
         ''' 
         Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a temperatura e composição são conhecidas.
@@ -1133,6 +1136,8 @@ class VLE:
         #==============================================================================
         #------------------ Estimativas iniciais --------------------------------------
         #==============================================================================
+        # Normalização do valor de y
+        y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
         T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
         
         coeffug  = [1.0,1.0]
