@@ -22,6 +22,7 @@ Referências:
   and Development, v. 14, n. 3, p. 209–216, jul. 1975.
 - SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
 """
+from threading import Thread
 from warnings import warn
 from numpy import log, exp, size, mean, abs, zeros, linspace, concatenate, array
 
@@ -87,7 +88,7 @@ class Condicao:
         self.Temp    = T
         self.Beta    = Beta
 
-class VLE:        
+class VLE(Thread):        
 
     def __init__(self,Algoritmo,Componentes,model_liq, model_vap,z=None,Temp=None,Pressao=None,estgama=None,estphi=None, estBeta = 0.5, tolAlg=1e-10, toleq=1e-4, maxiter=100, z_coordenacao = 10.0 ):    
         '''
@@ -345,8 +346,10 @@ class VLE:
         Fluid Phase Equilib. 57 (1990) 261–276.
 
         '''
-
-        Algoritmo = Algoritmo  # Algoritmo a ser utilizado: Flash, PontoBolha, PontoOrvalho, Coeficiente_Atividade, Coeficiente_Fugacidade
+        Thread.__init__(self)
+        # Definindo o __init_
+        
+        self.Algoritmo = Algoritmo  # Algoritmo a ser utilizado: Flash, PontoBolha, PontoOrvalho, Coeficiente_Atividade, Coeficiente_Fugacidade
         
         self.NC = size(Componentes) # Número de componentes da mistura
 
@@ -381,35 +384,6 @@ class VLE:
         self.tolAlg = tolAlg   # Tolerância do algortimo            
         self.maxiter = maxiter # Número máximo de iterações
             
-            
-        if Algoritmo == 'Coeficiente_Fugacidade':
-            
-            self.coefFug = self.Coeficiente_Fugacidade(self.z,self.Pressao,self.Temp)                        
-            
-        elif Algoritmo == 'Coeficiente_Atividade':
-                        
-            self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
-        
-        elif Algoritmo == 'PontoBolha_P':
-
-            self.PontoBolha_P(self.z,self.Temp)
-
-        elif Algoritmo == 'PontoBolha_T':
-            
-            self.PontoBolha_T(self.z,self.Pressao)
-            
-        elif Algoritmo == 'PontoOrvalho_P':
-                        
-            self.PontoOrvalho_P(self.z,self.Temp)
-        
-        elif Algoritmo == 'PontoOrvalho_T':
-            
-            self.PontoOrvalho_T(self.z,self.Pressao)
-
-        elif Algoritmo == 'Flash':
-            
-            self.Flash()
-
     def Second_Virial_Coef(self):
         '''
         Módulo para calcular o segundo coeficiente da equação Viral de acordo com as regras disponíveis.
@@ -591,19 +565,19 @@ class VLE:
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     
-                    if self.Componente[j].grupo_funcional in ['Ketone','Aldehyde','Alkyl Nitrile','Ether','Carboxylic Acid', 'Ester']:
+                    if self.Componente[j].grupo_funcional in ['Cetona','Aldeido','Alquil_nitrila','Eter','Acido_carboxilico', 'Ester']:
                         if i == j:
                             
                             parametro_a[i][j]        = -2.14e-4*mi_reduzido[j]-4.308e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                             
-                    elif self.Componente[j].grupo_funcional in ['Alkyl Halide', 'Mercaptan','Sulfide', 'Disulfides']:
+                    elif self.Componente[j].grupo_funcional in ['Haleto_organico', 'Mercaptan','Sulfeto', 'Dissulfeto']:
                         if i == j:
                             
                             parametro_a[i][j]        = -2.188e-11*(mi_reduzido[j])**4 - 7.831e-21*(mi_reduzido[j])**8
                             parametro_b[i][j]        = 0     
                 
-                    elif self.Componente[j].grupo_funcional == 'Alcohol':
+                    elif self.Componente[j].grupo_funcional == 'Alcool':
                         if self.Componente[j].nome != 'Metanol':
                             if i == j:
                                 
@@ -964,6 +938,7 @@ class VLE:
         #==============================================================================
         #------------------ Estimativas iniciais --------------------------------------
         #==============================================================================                
+        x = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)] # Normalização das composições
         self.PhiSat(T)
         P        = []
         coefAct  = self.Coeficiente_Atividade(x,T)
@@ -977,6 +952,8 @@ class VLE:
             P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
             # Cálculo de y por VLE
             y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            # Normalização do valor de y
+            y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Atualização de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
             
@@ -1082,6 +1059,8 @@ class VLE:
         #==============================================================================
         #------------------ Estimativas iniciais --------------------------------------
         #==============================================================================        
+        # Normalização do valor de y
+        y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
         self.PhiSat(T)
         P        = [self.Pressao]
         coeffug  = self.estphi
@@ -1093,6 +1072,8 @@ class VLE:
             P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i])    for i in xrange(self.NC)]))
             # Cálculo de x por VLE
             x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i]) for i in xrange(self.NC)]
+            # Normalização de x
+            x       = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Cálculo de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
             # Cálculo de gamma por modelos termodinamicos
@@ -1370,3 +1351,32 @@ class VLE:
             self.Temperatura_Ponto_Orvalho = array(Temperatura_Ponto_Orvalho)
         
             
+    def run(self):
+
+        if self.Algoritmo == 'Coeficiente_Fugacidade':
+            
+            self.coefFug = self.Coeficiente_Fugacidade(self.z,self.Pressao,self.Temp)                        
+            
+        elif self.Algoritmo == 'Coeficiente_Atividade':
+                        
+            self.coefAct = self.Coeficiente_Atividade(self.z,self.Temp)
+        
+        elif self.Algoritmo == 'PontoBolha_P':
+            
+            self.PontoBolha_P(self.z,self.Temp)
+
+        elif self.Algoritmo == 'PontoBolha_T':
+            
+            self.PontoBolha_T(self.z,self.Pressao)
+            
+        elif self.Algoritmo == 'PontoOrvalho_P':
+                        
+            self.PontoOrvalho_P(self.z,self.Temp)
+        
+        elif self.Algoritmo == 'PontoOrvalho_T':
+            
+            self.PontoOrvalho_T(self.z,self.Pressao)
+
+        elif self.Algoritmo == 'Flash':
+            
+            self.Flash()
