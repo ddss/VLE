@@ -906,7 +906,7 @@ class VLE(Thread):
             for j in xrange(self.NC):
                 if i != j:
                     comp[j] = fator*0.00000001
-            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc),T)[i])
+            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc),T)[i])
         self.phisat = phisat
         
     
@@ -949,9 +949,9 @@ class VLE(Thread):
         cont   = 0; deltaP = 10000
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
-            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
+            P.append(sum([liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
             # Cálculo de y por VLE
-            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            y       = [liquido.comp[i]*liquido.coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
             # Normalização do valor de y
             y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Atualização de phi por EoS
@@ -997,13 +997,13 @@ class VLE(Thread):
         #==============================================================================
   	# Normalização do valor de x
         x = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
+        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
         
         coeffug  = self.estphi
         cont   = 0; deltaT = 10        
         while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
             # cálculo da pressão de saturação P_i^(sat) por Prausnitz
-            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
             # Cálculo de phisat
             self.PhiSat(T[cont])
             # Cálculo de gamma por modelos termodinâmicos
@@ -1019,7 +1019,7 @@ class VLE(Thread):
             # Cálculo da pressão de saturação P_j^(sat) por VLE
             psat     = [P/(sum([(x[i]*liquido.coefAct[i]*self.phisat[i]*psat_ini[i])/(psat_ini[j]*coeffug[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
             # Atualização do valor de T por Prausnitz
-            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].nEqPsat,self.Componente[1].Tc,self.Componente[1].Pc))
+            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].Tc,self.Componente[1].Pc))
             # Atualização do valor de deltaT
             deltaT  = abs((T[cont+1] - T[cont])/T[cont])
             cont+=1
@@ -1119,7 +1119,7 @@ class VLE(Thread):
         #==============================================================================
         # Normalização do valor de y
         y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
+        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
         
         coeffug  = [1.0,1.0]
         coefAct  = [[1.0,1.0]]
@@ -1127,7 +1127,7 @@ class VLE(Thread):
         
         while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
             # cálculo da pressão de saturação P_i^(sat) por Prausnitz
-            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].nEqPsat,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
             # Cálculo de phisat
             self.PhiSat(T[cont])            
             # Atualização de phi por EoS
@@ -1150,7 +1150,7 @@ class VLE(Thread):
             # Cálculo da pressão de saturação P_j^(sat) por VLE
             psat     = [P*(sum([(y[i]*coeffug[i]*psat_ini[j])/(liquido.coefAct[i]*self.phisat[i]*psat_ini[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
             # Atualização do valor de T por Prausnitz
-            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].nEqPsat,self.Componente[1].Tc,self.Componente[1].Pc))
+            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].Tc,self.Componente[1].Pc))
             # Atualização do valor de deltaT
             deltaT  = abs((T[cont+1] - T[cont])/T[cont])
             cont+=1
