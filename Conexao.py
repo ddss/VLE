@@ -269,7 +269,7 @@ class Componente_Caracterizar:
                         raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.eqPsat,)+' Tc = %f.'%self.Tc)
 
 
-    def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,nEq,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
+    def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
         u'''
         Método para cálculo da pressão de vapor de componentes puros, conforme [1].
         
@@ -284,8 +284,7 @@ class Componente_Caracterizar:
         * T (float): Temperatura em Kelvin;
             
             * O valor de T inserido deve ser menor do que o valor de Tc.
-            
-        * nEq (int): Número de identificação da forma (ou tipo) de equação;
+    
         * Tc (float): Temperatura crítica em Kelvin; 
         * Pc (float): Pressão crítica em bar
         * Pvp_ini: Estimativa inicial para a pressão de vapor, quando nEq = 2 (Equação implícta).
@@ -335,7 +334,7 @@ class Componente_Caracterizar:
         # Todos os Pvp são dados em bar
         return Pvp
         
-    def Tsat_Prausnitz_4th(self,VPA,VPB,VPC,VPD,P,nEq,Tc=None,Pc=None,Tsat_ini=500,tol=1e-10):
+    def Tsat_Prausnitz_4th(self,VPA,VPB,VPC,VPD,P,Tc=None,Pc=None,Tsat_ini=500,tol=1e-10):
         u'''
         Método para cálculo da temperatura de componentes puros, conforme [1].
         
@@ -348,11 +347,8 @@ class Componente_Caracterizar:
         * VPC (float): Parâmetro VPC;
         * VPD (float): Parâmetro VPD;
         * P (float): Pressão em bar;
-        * nEq (int): Número de identificação da forma (ou tipo) de equação;
         * Tc (float): Temperatura crítica em Kelvin; 
         * Pc (float): Pressão crítica em bar
-        * Pvp_ini: Estimativa inicial para a pressão de vapor, quando nEq = 2 (Equação implícta).
-        * tol: teolerância para o cálculo da raiz da equação nEq = 2 (Equação implícta)
         
         ================
         Valores default 
@@ -492,7 +488,7 @@ class Componente_Caracterizar:
             #==============================================================================
             
             self.warnings()    
-            self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.nEqPsat,self.Tc,self.Pc)
+            self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.Tc,self.Pc)
         
         
 class Modelo:
