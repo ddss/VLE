@@ -2,14 +2,27 @@
 """
 Created on Wed Feb 04 11:01:10 2015
 
-@author: labpic-14
+Rotina para a plotagem de gráficos. Os gráficos possíveis são:
+
+- Diagrama de (P) x (x,y);
+- Diagrama de (T) x (x,y);
+- Diagrama de (x) x (y).
+
+Vide [1] para maiores informações sobre os diagramas.
+
+Referências:
+
+[1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
+    Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills, 2004.        
+
+@author: CaiqueFerreira
 """
 
-from matplotlib.pyplot import plot, xlabel, ylabel, title, xlim, legend, grid, show, figure
+from matplotlib.pyplot import plot, xlabel, ylabel, title, xlim, legend, grid, show, figure, errorbar
 
 class Graficos:
 
-    def __init__(self,Diagrama,T,P,Componentes,Eixo_X1,Eixo_Y1,Eixo_Y2 = None, Eixo_X2 = None):
+    def __init__(self,Diagrama,Componentes,Eixo_X1,Eixo_Y1,Eixo_Y2 = None, Eixo_X2 = None,x_experimentais = None,y_experimentais = None,y_incertezas = None,T = None,P = None):
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
         
@@ -18,13 +31,16 @@ class Graficos:
         ========
 
         * Diagrama (str): O tipo de diagrama ou gráficor que se pretende realizar;
-        * T (float): A temperatura da mistura em Kelvin;
-        * P (float): A pressão em bar;
         * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
         * Eixo_X1 (array): Contém os valores do eixo x, entrada obrigratória;
         * Eixo_Y1 (array): Contém os valores do eixo y, entrada obrigratória;
         * Eixo_Y2 (array): Contém valores que podem ser implementados no eixo y, entrada opcional;
-        * Eixo_X2 (array): Contém valores que podem ser implementados no eixo x, entrada opcional.
+        * Eixo_X2 (array): Contém valores que podem ser implementados no eixo x, entrada opcional;
+        * x_experimentais (list): Uma lista de arrays contendo as composições experimentais das fases líquida e vapor;
+        * y_experimentais (array): Contém valores  experimentais que podem ser das temperaturas ou pressões; 
+        * y_incertezas (array): Contém valores das incertezas das temperaturas ou pressões;
+        * T (float): A temperatura da mistura em Kelvin;
+        * P (float): A pressão em bar.
         
         =======
         Métodos
@@ -32,6 +48,8 @@ class Graficos:
         
         * ``P_x_y``:
             * Método para criação do diagrama Pxy, pressão em função das composições, vide [1].
+        * ``T_x_y``:
+            * Método para criação do diagrama Txy, temperatura em função das composições, vide [1].
         * ``x_y``:
             * Método para criação do diagrama xy, composição da fase de vapor em função da composicção da fase líquida,vide [1].
         
@@ -62,7 +80,7 @@ class Graficos:
             
         Em seguida, pode plotado o diagrama Pxy, conforme consta em [1].  ::
         
-            Graficos('Pxy',330.0,Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho)
+            Graficos('Pxy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
         
         =========
         Exemplo 2        
@@ -89,7 +107,7 @@ class Graficos:
         
         Em seguida, pode plotado o diagrama xy para os componentes, conforme consta em [1].  ::
         
-            Graficos('xy',330.0,Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2)  
+            Graficos('xy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2,T = 330.0)  
         
         Os gráficos são gerados automaticamente.
         
@@ -100,20 +118,26 @@ class Graficos:
         [1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.        
         '''
+        #==============================================================================
+        #         Definição das variáveis
+        #==============================================================================
         self.T  = T
         self.P  = P
         self.x1 = Eixo_X1
         self.x2 = Eixo_X2
         self.y1 = Eixo_Y1
         self.y2 = Eixo_Y2        
-        self.Componentes   = Componentes
+        self.Componentes = Componentes
+        self.x_exp = x_experimentais
+        self.y_exp = y_experimentais
+        self.y_incertezas = y_incertezas
         
         if Diagrama == 'Pxy':
             
             self.P_x_y()
         
         elif Diagrama == 'Txy':
-            
+             
             self.T_x_y()
         
         elif Diagrama == 'xy':
@@ -138,11 +162,26 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
-        plot(self.x1,self.y1,'-')
-        plot(self.x1,self.y2,'-')
+        #==============================================================================
+        #         Plotagem dos pontos calculados
+        #==============================================================================
+        plot(self.x1,self.y1,'-',color ='green')
+        plot(self.x1,self.y2,'-',color ='blue')
+        
+        if self.y_exp != None:
+            #==============================================================================
+            #         Plotagem dos pontos experimentais
+            #==============================================================================
+            plot(self.x_exp[0],self.y_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
+            plot(self.x_exp[1],self.y_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
+            #==============================================================================
+            #         Plotagem das incertezas
+            #==============================================================================
+            errorbar(self.x_exp[0],self.y_exp,self.y_incertezas,fmt='o', ecolor='g')
+            errorbar(self.x_exp[1],self.y_exp,self.y_incertezas,fmt='o', ecolor='b')
         
         xlabel(u'x,y')
-        ylabel(u'Pressão/bar')
+        ylabel(u'Pressão(bar)')
         title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
@@ -167,11 +206,26 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
-        plot(self.x1,self.y1,'-')
-        plot(self.x1,self.y2,'-')
+        #==============================================================================
+        #         Plotagem dos pontos calculados
+        #==============================================================================
+        plot(self.x1,self.y1,'-',color ='green')
+        plot(self.x1,self.y2,'-',color ='blue')
+        
+        if self.y_exp != None:
+            #==============================================================================
+            #         Plotagem dos pontos experimentais
+            #==============================================================================
+            plot(self.x_exp[0],self.y_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
+            plot(self.x_exp[1],self.y_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
+            #==============================================================================
+            #         Plotagem das incertezas
+            #==============================================================================
+            errorbar(self.x_exp[0],self.y_exp,self.y_incertezas,fmt='o', ecolor='g')
+            errorbar(self.x_exp[1],self.y_exp,self.y_incertezas,fmt='o', ecolor='b')
         
         xlabel(u'x,y')
-        ylabel(u'Temperatura/K')
+        ylabel(u'Pressão(bar)')
         title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.P))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
