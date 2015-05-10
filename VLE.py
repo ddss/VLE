@@ -1,26 +1,34 @@
 # -*- coding: utf-8 -*-
 """
 @author: Daniel
-@Contribuição: Anderson e Caique
+@Contribuição:Caique
 @ Data: 27/10/2013
-@Atualizado em : 05/09/2014
 
-Rotina para Cálculo do Equilíbrio de fases em Misturas.
+Rotinas para Cálculo do Equilíbrio de fases em Misturas através da abordagem gamma-phi
+
+Modelos termodinâmicos:
+    - UNIQUAC
+    - VIRIAL
+    - NRTL
+    - WILSON
+    - Van Laar
 
 Métodos:
     - Second_Virial_Coef: Cálculo do segundo coeficiente do Virial
     - Coeficiente_Atividade: Cálculo do Coeficiente de Atividade
     - Coeficiente_Fugacidade: Cálculo do Coeficiente de Fugacidade
-    - Flash: Cáculo de um flash
+    - Flash: Cáculo de um flash (Incompleto)
     - PhiSat: Cálculo do coeficiente de fugacidade nas condições de saturação
-    - PontoBolha: Cálculo do ponto de bolha (T conhecido) (Dado: x, T/K -> Cálcula: y, P/bar)
-    - PontoOrvalho: Cálculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> Cálcula: x, P/bar)
+    - PontoBolha_P: Cálculo do ponto de bolha (T conhecido) (Dado: x, T/K -> Cálcula: y, P/bar)
+    - PontoOrvalho_P: Cálculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> Cálcula: x, P/bar)
+    - PontoBolha_T: Cálculo do ponto de bolha (P conhecido) (Dado: x, P/bar -> Cálcula: y, T/K)
+    - PontoOrvalho_T: Cálculo do ponto de orvalho (P conhecido) (Dado: y, P/bar -> Cálcula: x, T/K)
 
 Referências:
-- PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
-- HAYDEN, J. G.; O’CONNELL, J. P. A Generalized Method for Predicting Second Virial Coefficients. Industrial & Engineering Chemistry Process Design
-  and Development, v. 14, n. 3, p. 209–216, jul. 1975.
-- SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
+[1] PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
+[2] HAYDEN, J. G.; O’CONNELL, J. P. A Generalized Method for Predicting Second Virial Coefficients. Industrial & Engineering Chemistry Process Design
+    and Development, v. 14, n. 3, p. 209–216, jul. 1975.
+[3] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
 """
 from threading import Thread
 from warnings import warn

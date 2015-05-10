@@ -5,15 +5,18 @@ Modelos termodinâmicos:
     - VIRIAL
     - NRTL
     - WILSON
+    - Van Laar
 
 Métodos:
     - Second_Virial_Coef: Cálculo do segundo coeficiente do Virial
     - Coeficiente_Atividade: Cálculo do Coeficiente de Atividade
     - Coeficiente_Fugacidade: Cálculo do Coeficiente de Fugacidade
-    - Flash: Cáculo de um flash
+    - Flash: Cáculo de um flash (Incompleto)
     - PhiSat: Cálculo do coeficiente de fugacidade nas condições de saturação
-    - PontoBolha: Cálculo do ponto de bolha (T conhecido) (Dado: x, T/K -> Cálcula: y, P/bar)
-    - PontoOrvalho: Cálculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> Cálcula: x, P/bar)
+    - PontoBolha_P: Cálculo do ponto de bolha (T conhecido) (Dado: x, T/K -> Cálcula: y, P/bar)
+    - PontoOrvalho_P: Cálculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> Cálcula: x, P/bar)
+    - PontoBolha_T: Cálculo do ponto de bolha (P conhecido) (Dado: x, P/bar -> Cálcula: y, T/K)
+    - PontoOrvalho_T: Cálculo do ponto de orvalho (P conhecido) (Dado: y, P/bar -> Cálcula: x, T/K)
 
 Referências:
 - PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
