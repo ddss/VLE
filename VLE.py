@@ -1166,7 +1166,7 @@ class VLE(Thread):
         vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
         self.Orvalho = Condicao(P,T[cont],liquido,vapor,1.0)
         
-    def Flash(self):
+    def Flash(self,z,T,P):
         '''
 
         Módulo para realizar o calculo de flash
@@ -1176,90 +1176,75 @@ class VLE(Thread):
         ======
         ?
         '''   
+        z    = [z[i]/(sum([z[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+        Psat = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+        self.PontoBolha_P(z,T)
+        self.PontoOrvalho_P(z,T)
+                
+        if (P <= self.Bolha.Pressao) and (P >= self.Orvalho.Pressao):
+#            interp = (self.Pressao - self.Orvalho.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)
+#            coefAct = [(self.Bolha.liquido.coefAct[i] - self.Bolha.liquido.coefAct[i])*interp + self.Orvalho.liquido.coefAct[i]  for i in xrange(self.NC) ]
+#            coefFug = [(self.Bolha.vapor.coefFug[i]   - self.Bolha.vapor.coefFug[i])*interp   + self.Orvalho.vapor.coefFug[i]    for i in xrange(self.NC) ]
+            x = z
+            y = z
+            self.PhiSat(T)
+            V    = [(self.Bolha.Pressao - self.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)]
 
-        self.PontoBolha()
-        self.PontoOrvalho()
-        
-        if (self.Pressao <= self.Bolha.Pressao) and (self.Pressao >= self.Orvalho.Pressao):
-            interp = (self.Pressao - self.Orvalho.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)
-            coefAct = [(self.Bolha.liquido.coefAct[i] - self.Bolha.liquido.coefAct[i])*interp + self.Orvalho.liquido.coefAct[i]  for i in xrange(self.NC) ]
-            coefFug = [(self.Bolha.vapor.coefFug[i]   - self.Bolha.vapor.coefFug[i])*interp   + self.Orvalho.vapor.coefFug[i]    for i in xrange(self.NC) ]
-            Beta    = [(self.Bolha.Pressao - self.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)]
+            cont = 0; deltaV = 1e10;
+            while (deltaV>self.tolAlg) and (cont<(self.maxiter)):
+                # Cálculo dos coeficientes de atividade:
+                coefAct = self.Coeficiente_Atividade(x,T)
+                coefFug = self.Coeficiente_Fugacidade(y,P,T)
+                
+                # Cálculo de K
+                
+                K = [(coefAct[i]*Psat[i]*self.phisat[i]) / (coefFug[i]*P) for i in xrange(self.NC)]
+		
+        		# Cálculo de F e sua derivada em relação à fração de vapor
+                F     = sum([z[i]*(K[i]-1)    / (1+V[cont]*(K[i]-1))    for i in xrange(self.NC)])
+                dFdV = (-1)*sum([z[i]*(K[i]-1)**2 / (1+V[cont]*(K[i]-1))**2 for i in xrange(self.NC)])
+		
+        		# Aplicação do método de Newton
+                V.append(V[cont] - F/dFdV)
+#		
+#    		if Beta[cont+1] > 1.0 or Beta[cont+1] < 0.0:
+#		   Beta[cont+1] = 0.5
+#		   tBeta        = True
 
-            cont = 0; deltabeta = 1e10; Valeq = 1e10; tBeta = False
-            while ((deltabeta>self.tolAlg or mean(abs(deltaeq))>self.toleq) and (cont<(self.maxiter))) or (tBeta == True):
-                print cont
-		# Início das listas K, x e y
-		K = range(self.NC)
-		x = range(self.NC)
-		y = range(self.NC)
-		
-		# Cálculo de K
-  
-		K = [(coefAct[i]*self.Componente[i].Psat) / (coefFug[i]*self.Pressao) for i in xrange(self.NC)]
-		
-		# Cálculo de F e sua derivada em relação à fração de vapor
-		F     = sum([self.z[i]*(K[i]-1)    / (1+Beta[cont]*(K[i]-1))    for i in xrange(self.NC)])
-		diffF = sum([self.z[i]*(K[i]-1)**2 / (1+Beta[cont]*(K[i]-1))**2 for i in xrange(self.NC)])
-		
-		# Aplicação do método de Newton
-		Beta.append(Beta[cont]+0.05*F/diffF)
-		
-		if Beta[cont+1] > 1.0 or Beta[cont+1] < 0.0:
-		   Beta[cont+1] = 0.5
-		   tBeta        = True
-
-		# Cálculo das composições e subsequente normalização:
-		x    = [self.z[i] / (1 + Beta[cont+1]*(K[i]-1)) for i in xrange(self.NC)]
-		norm = sum(x)
-		x    = [x[i]/norm for i in xrange(self.NC)]
-		
-		y    = [K[i]*x[i] for i in xrange(self.NC)]
-		norm = sum(y)
-		y    = [y[i]/norm for i in xrange(self.NC)]
+            	# Cálculo das composições e subsequente normalização:
+                x    = [z[i] / (1 + V[cont+1]*(K[i]-1)) for i in xrange(self.NC)]
+                x    = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+            
+                y    = [K[i]*x[i] for i in xrange(self.NC)]
+                y    = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+                
+                # Diferença entre valores de beta
+                deltaV = abs((V[cont] - V[cont-1])/V[cont])
 	
-		# Cálculo dos coeficientes de atividade:
-		coefAct    = self.Coeficiente_Atividade(x,self.Temp)
-		coefFug    = self.Coeficiente_Fugacidade(y,self.Pressao,self.Temp)
-		
-		coefFugsat = [self.Coeficiente_Fugacidade([y[i]],self.Componente[i].Psat,self.Temp) for i in xrange(2)]
-	
-		# Validação do equilíbrio líquido-vapor
- 
-		# Líquido
-		Eqliq = [x[i]*coefAct[i]*self.Componente[i].Psat for i in xrange(self.NC)]
-		# Vapor
-		Eqvap = [y[i]*coefFug[i]*self.Pressao for i in xrange(self.NC)]    
-		# Diferença entre Eqliq e Eqvap (Eles deveriam ser iguais) para cada componente       
-		deltaeq   = [Eqliq[i] - Eqvap[i] for i in xrange(self.NC)]
-
-		# Diferença entre valores de beta
-		deltabeta = Beta[cont] - Beta[cont-1]
-	
-		cont+=1
-	
-	    if deltabeta>self.tolAlg:
-		 self.wBeta = "Convergência em Beta NÃO alcançada"
-	    else:
-		self.wBeta = "Convergência em Beta alcançada"
-		
-	    if mean(abs(deltaeq))>self.toleq:
-		self.wVal = "Convergência no equilíbrio NÃO alcançada"
-	    else:
-		self.wVal = "Convergência no equilíbrio alcançada"
-
-	    if cont>=(self.maxiter):
-		self.witer = "Número máximo de iterações atingido"
-	    else:
-		self.witer = "Número máximo de iterações NÃO atingido"
-	    
+                cont+=1
+#	
+#	    if deltabeta>self.tolAlg:
+#		 self.wBeta = "Convergência em Beta NÃO alcançada"
+#	    else:
+#		self.wBeta = "Convergência em Beta alcançada"
+#		
+#	    if mean(abs(deltaeq))>self.toleq:
+#		self.wVal = "Convergência no equilíbrio NÃO alcançada"
+#	    else:
+#		self.wVal = "Convergência no equilíbrio alcançada"
+#
+#	    if cont>=(self.maxiter):
+#		self.witer = "Número máximo de iterações atingido"
+#	    else:
+#		self.witer = "Número máximo de iterações NÃO atingido"
+#	    
 	    liquido = Fase(composicao=x,coeffug=None   ,coefAct = coefAct)
 	    vapor   = Fase(composicao=y,coeffug=coefFug,coefAct = None)
-	    Beta    = Beta
-            self.Flash = Condicao(self.Pressao,self.Temp,liquido,vapor,Beta)
+	    V       = V
+	    self.Flash = Condicao(self.Pressao,self.Temp,liquido,vapor,V)
 	else:
 	    self.wFlash = 'Não é possível executar o Flash'
-            self.Flash = None
+	    self.Flash = None
         
     def Predicao(self,T = None, P = None):
         '''
