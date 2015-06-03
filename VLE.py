@@ -1162,6 +1162,7 @@ class VLE(Thread):
             # Atualização do valor de deltaT
             deltaT  = abs((T[cont+1] - T[cont])/T[cont])
             cont+=1
+            
         # Caracterização da fase vapor
         vapor =  Fase(composicao=y,coeffug=coeffug,coefAct = None)
         self.Orvalho = Condicao(P,T[cont],liquido,vapor,1.0)
@@ -1181,20 +1182,19 @@ class VLE(Thread):
         self.PontoBolha_P(z,T)
         self.PontoOrvalho_P(z,T)
                 
-        if (P <= self.Bolha.Pressao) and (P >= self.Orvalho.Pressao):
-#            interp = (self.Pressao - self.Orvalho.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)
-#            coefAct = [(self.Bolha.liquido.coefAct[i] - self.Bolha.liquido.coefAct[i])*interp + self.Orvalho.liquido.coefAct[i]  for i in xrange(self.NC) ]
-#            coefFug = [(self.Bolha.vapor.coefFug[i]   - self.Bolha.vapor.coefFug[i])*interp   + self.Orvalho.vapor.coefFug[i]    for i in xrange(self.NC) ]
-            x = z
-            y = z
+        if (P < self.Bolha.Pressao) and (P > self.Orvalho.Pressao):
+            
+            interp = (P - self.Orvalho.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)
+            coefAct = [(self.Bolha.liquido.coefAct[i] - self.Orvalho.liquido.coefAct[i])*interp + self.Orvalho.liquido.coefAct[i]  for i in xrange(self.NC) ]
+            coefFug = [(self.Bolha.vapor.coefFug[i]   - self.Orvalho.vapor.coefFug[i])*interp   + self.Orvalho.vapor.coefFug[i]    for i in xrange(self.NC) ]
+            
             self.PhiSat(T)
+            
             V    = [(self.Bolha.Pressao - self.Pressao)/(self.Bolha.Pressao - self.Orvalho.Pressao)]
-
-            cont = 0; deltaV = 1e10;
-            while (deltaV>self.tolAlg) and (cont<(self.maxiter)):
-                # Cálculo dos coeficientes de atividade:
-                coefAct = self.Coeficiente_Atividade(x,T)
-                coefFug = self.Coeficiente_Fugacidade(y,P,T)
+            x    = [z]
+            y    = [z]
+            cont = 0; deltaV = 1e10; delta_x = 1e4; delta_y = 1e4            
+            while (deltaV>self.tolAlg) and (delta_x>self.toleq) and (delta_y>self.toleq) and (cont<(self.maxiter)) :
                 
                 # Cálculo de K
                 
@@ -1206,42 +1206,32 @@ class VLE(Thread):
 		
         		# Aplicação do método de Newton
                 V.append(V[cont] - F/dFdV)
-#		
-#    		if Beta[cont+1] > 1.0 or Beta[cont+1] < 0.0:
-#		   Beta[cont+1] = 0.5
-#		   tBeta        = True
 
             	# Cálculo das composições e subsequente normalização:
-                x    = [z[i] / (1 + V[cont+1]*(K[i]-1)) for i in xrange(self.NC)]
-                x    = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+                x_aux = [z[i] / (1 + V[cont+1]*(K[i]-1)) for i in xrange(self.NC)]
+                x.append([x_aux[i]/(sum([x_aux[i] for i in xrange(self.NC)])) for i in xrange(self.NC)])
             
-                y    = [K[i]*x[i] for i in xrange(self.NC)]
-                y    = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
+                y_aux = [K[i]*x[i] for i in xrange(self.NC)]
+                y.append([y_aux[i]/(sum([y_aux[i] for i in xrange(self.NC)])) for i in xrange(self.NC)])
+
+                # Cálculo das fugacidades
+                coefAct = self.Coeficiente_Atividade(x[cont+1],T)
+                coefFug = self.Coeficiente_Fugacidade(y[cont+1],P,T)
+                
+                # Diferença entre valores de x
+                delta_x = abs((x[cont+1][0] - x[cont][0])/x[cont][0])
+                
+                # Diferença entre valores de y
+                delta_y = abs((y[cont+1][0] - y[cont][0])/y[cont][0])
                 
                 # Diferença entre valores de beta
-                deltaV = abs((V[cont] - V[cont-1])/V[cont])
-	
+                deltaV = abs((V[cont+1] - V[cont])/V[cont])
+                
                 cont+=1
-#	
-#	    if deltabeta>self.tolAlg:
-#		 self.wBeta = "Convergência em Beta NÃO alcançada"
-#	    else:
-#		self.wBeta = "Convergência em Beta alcançada"
-#		
-#	    if mean(abs(deltaeq))>self.toleq:
-#		self.wVal = "Convergência no equilíbrio NÃO alcançada"
-#	    else:
-#		self.wVal = "Convergência no equilíbrio alcançada"
-#
-#	    if cont>=(self.maxiter):
-#		self.witer = "Número máximo de iterações atingido"
-#	    else:
-#		self.witer = "Número máximo de iterações NÃO atingido"
-#	    
-	    liquido = Fase(composicao=x,coeffug=None   ,coefAct = coefAct)
-	    vapor   = Fase(composicao=y,coeffug=coefFug,coefAct = None)
-	    V       = V
-	    self.Flash = Condicao(self.Pressao,self.Temp,liquido,vapor,V)
+
+	    liquido = Fase(composicao=x[cont],coeffug=None   ,coefAct = coefAct)
+	    vapor   = Fase(composicao=y[cont],coeffug=coefFug,coefAct = None)
+	    self.Flash = Condicao(self.Pressao,self.Temp,liquido,vapor,V[cont])
 	else:
 	    self.wFlash = 'Não é possível executar o Flash'
 	    self.Flash = None
@@ -1372,4 +1362,4 @@ class VLE(Thread):
 
         elif self.Algoritmo == 'Flash':
             
-            self.Flash()
+            self.Flash(self.z,self.Temp,self.Pressao)
