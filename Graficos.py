@@ -22,7 +22,7 @@ from matplotlib.pyplot import plot, xlabel, ylabel, title, xlim, legend, grid, s
 
 class Graficos:
 
-    def __init__(self,Diagrama,Componentes,Eixo_X1,Eixo_Y1,Eixo_Y2 = None, Eixo_X2 = None,x_experimentais = None,y_experimentais = None,y_incertezas = None,T = None,P = None):
+    def __init__(self,Diagrama,VLE,x_experimentais = None,y_experimentais = None, y_incertezas = None, x_incertezas = None, T = None, P = None, P_incertezas = None, T_incertezas = None):
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
         
@@ -31,14 +31,10 @@ class Graficos:
         ========
 
         * Diagrama (str): O tipo de diagrama ou gráficor que se pretende realizar;
-        * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
-        * Eixo_X1 (array): Contém os valores do eixo x, entrada obrigratória;
-        * Eixo_Y1 (array): Contém os valores do eixo y, entrada obrigratória;
-        * Eixo_Y2 (array): Contém valores que podem ser implementados no eixo y, entrada opcional;
-        * Eixo_X2 (array): Contém valores que podem ser implementados no eixo x, entrada opcional;
-        * x_experimentais (list): Uma lista de arrays contendo as composições experimentais das fases líquida e vapor;
-        * y_experimentais (array): Contém valores  experimentais que podem ser das temperaturas ou pressões; 
-        * y_incertezas (array): Contém valores das incertezas das temperaturas ou pressões;
+        * VLE (objeto): objeto VLE após execuação do método Predicao executado
+        * x_experimentais (list):
+        * y_experimentais (array):
+        * y_incertezas (array):
         * T (float): A temperatura da mistura em Kelvin;
         * P (float): A pressão em bar.
         
@@ -118,23 +114,20 @@ class Graficos:
         [1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.        
         '''
+        # TODO: converter para keywargs
         #==============================================================================
         #         Definição das variáveis
         #==============================================================================
         self.T  = T
-        self.P  = P
-        self.x1 = Eixo_X1
-        self.x2 = Eixo_X2
-        self.y1 = Eixo_Y1
-        self.y2 = Eixo_Y2        
-        self.Componentes = Componentes
+        self.P_exp  = P
+        self.P_incertezas = P_incertezas
         self.x_exp = x_experimentais
         self.y_exp = y_experimentais
         self.y_incertezas = y_incertezas
         
         if Diagrama == 'Pxy':
             
-            self.P_x_y()
+            self.P_x_y(VLE)
         
         elif Diagrama == 'Txy':
              
@@ -144,7 +137,7 @@ class Graficos:
             
             self.x_y()
             
-    def P_x_y(self):
+    def P_x_y(self,VLE):
         '''
         Método para criação do diagrama Pxy, pressão em função das composições, vide [1].
         
@@ -165,26 +158,28 @@ class Graficos:
         #==============================================================================
         #         Plotagem dos pontos calculados
         #==============================================================================
-        plot(self.x1,self.y1,'-',color ='green')
-        plot(self.x1,self.y2,'-',color ='blue')
+        plot(VLE.Bolha.comp[0],VLE.Bolha.Pressao,'-',color ='green')
+        plot(VLE.Orvalho.comp[0],VLE.Orvalho.Pressao,'-',color ='blue')
         
-        if self.y_exp != None:
-            #==============================================================================
+        if self.y_exp is not None:
+            # TODO: usar quando definido
+            print 'aqui'
+            # ==============================================================================
             #         Plotagem dos pontos experimentais
-            #==============================================================================
-            plot(self.x_exp[0],self.y_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
-            plot(self.x_exp[1],self.y_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
-            #==============================================================================
+            # ==============================================================================
+            #plot(self.x_exp,self.P_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
+            #plot(self.y_exp,self.P_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
+            # ==============================================================================
             #         Plotagem das incertezas
-            #==============================================================================
-            errorbar(self.x_exp[0],self.y_exp,self.y_incertezas,fmt='o', ecolor='g')
-            errorbar(self.x_exp[1],self.y_exp,self.y_incertezas,fmt='o', ecolor='b')
+            # ==============================================================================
+            errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
         
         xlabel(u'x,y')
         ylabel(u'Pressão /bar')
-        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
+#        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
         xlim(0,1)
-        legend(['Bubble Pressure','Dew Pressure'],loc='best')
+        legend(['Dew Pressure','Bubble Pressure'],loc='best')
         grid() # Adiciona a grade ao gráfico
         show()
 
