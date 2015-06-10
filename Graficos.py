@@ -184,7 +184,7 @@ class Graficos:
         ylabel(u'Pressão /bar')
         title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
         xlim(0,1)
-        legend(['Bubble Temperature','Dew Temperature'],loc='best')
+        legend(['Bubble Pressure','Dew Pressure'],loc='best')
         grid() # Adiciona a grade ao gráfico
         show()
 

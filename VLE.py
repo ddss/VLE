@@ -1073,13 +1073,13 @@ class VLE(Thread):
         P        = [self.Pressao]
         coeffug  = self.estphi
         coefAct  = self.estgama        
-        cont   = 1; deltaP = 10000
+        cont   = 0; deltaP = 10000
         
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
-            P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i])    for i in xrange(self.NC)]))
+            P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i])    for i in xrange(self.NC)]))
             # Cálculo de x por VLE
-            x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Psat*self.phisat[i]) for i in xrange(self.NC)]
+            x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]) for i in xrange(self.NC)]
             # Normalização de x
             x       = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Cálculo de phi por EoS
@@ -1277,7 +1277,7 @@ class VLE(Thread):
             
             # Realiza o cálculo do ponto de bolha e de orvalho de cada par de concetrações
             for i  in xrange(len(x_2)):
-                
+            
                 # Cálculos
                 self.PontoBolha_P([x_1[i],x_2[i]],T)
                 self.PontoOrvalho_P([x_1[i],x_2[i]],T)
