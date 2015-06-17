@@ -61,7 +61,8 @@ class Condicao:
         
         * ``Numero_componentes``(int): Número de componentes utilizado
         * ``Massa_molar``       (list): lista com as massas molares dos componentes;
-        
+        * ``beta``              (float): relação entre vapor e líquido.
+
         =========
         Atributos
         =========
@@ -74,30 +75,41 @@ class Condicao:
         * ``coeffug`` (list): Os valores dos coeficientes de fugacidade;
         * ``coefAct`` (list): Os valores dos coeficientes de atividade;
         '''
+        # ----------------------------------------------------
+        # VALIDAÇÃO
+        # ----------------------------------------------------
+        # Keywords disponíveis
+        __keywordsEntrada = ['massa_molar','numero_componentes','beta']
+
+        # Validação se houve keywords digitadas incorretamente:
+        keyincorreta  = [key for key in kwargs.keys() if not key in __keywordsEntrada]
+
+        if len(keyincorreta) != 0:
+            raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
+
+        # ----------------------------------------------------
+        # EXECUÇÃO
+        # ----------------------------------------------------
+
         self.Pressao = P
         self.Temp    = T
         self.coeffug = coeffug
         self.coefAct = coefAct        
         self.comp_molar = composicao        
-                
-        # Keywords disponíveis
-        __keywordsEntrada = ['Massa_molar','Numero_componentes']
-        
-        # Validação se houve keywords digitadas incorretamente:
-        keyincorreta  = [key for key in kwargs.keys() if not key in __keywordsEntrada]
-        
-        if len(keyincorreta) != 0:
-            raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
-        
+        self.beta     = kwargs.get('beta')
+
         # Caracterização dos kwargs
-        NC = kwargs.get(__keywordsEntrada[1])
         mm_comp = kwargs.get(__keywordsEntrada[0])
-        
+        NC = kwargs.get(__keywordsEntrada[1])
+
         if NC and mm_comp is not None:
             # Cálculo da composição mássica
             mm_medio = sum([self.comp_molar[0]*mm_comp[0],self.comp_molar[1]*mm_comp[1]]) # em g/mol
             self.comp_massica = [mm_comp[i]*self.comp_molar[i]/mm_medio for i in xrange(NC)]
-        
+
+
+
+
 class VLE(Thread):        
 
     def __init__(self,Algoritmo,Componentes,model_liq, model_vap,z=None,Temp=None,Pressao=None,estgama=None,estphi=None, estBeta = 0.5, tolAlg=1e-10, toleq=1e-4, maxiter=100, z_coordenacao = 10.0 ):    
@@ -380,12 +392,12 @@ class VLE(Thread):
         
         # Estimativas iniciais
 
-        if estgama == None:        
+        if estgama is None:
             self.estgama = [1.0]*len(self.Componente) # estimativa para o coeficiente de atividade
         else:
             self.estgama = estgama
             
-        if estphi == None:
+        if estphi is None:
             self.estphi  = [1.0]*len(self.Componente)  # estimativa para o coeficiente de fugacidade
         else:
             self.estphi = estphi

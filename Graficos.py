@@ -169,7 +169,7 @@ class Graficos:
         
         if len(keyincorreta) != 0:
             raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
-        
+
         #==============================================================================
         #  Validação se houve a presença das incertezas sem os pontos experimentais
         #==============================================================================
@@ -240,23 +240,10 @@ class Graficos:
         #         Plotagem dos pontos experimentais
         #==============================================================================
         
-        if self.x_exp and self.P_exp is not None:
-            plot(self.x_exp,self.P_exp, ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-            plot(self.y_exp,self.P_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-            
-            if self.P_incertezas is not None:
-                # ==============================================================================
-                #         Plotagem das incertezas de P
-                # ==============================================================================
-                errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                
-                if self.x_incertezas is not None:
-                    # ==============================================================================
-                    #         Plotagem das incertezas das composições
-                    # ==============================================================================
-                    errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                    errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+        if self.x_exp is not None and self.P_exp is not None and self.y_exp is not None:
+
+            errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
                                                                     
         xlabel(u'x,y')
         ylabel(u'Pressão /bar')
