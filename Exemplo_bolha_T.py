@@ -26,19 +26,16 @@ exemplo.run()
 
 # Saídas dos cálculos
 print exemplo.Bolha.Temp
-print exemplo.Bolha.vapor.comp
+print exemplo.Bolha.comp_molar
 
 # Caracterização do gráfico
     # Caracterização do gráfico teórico
-exemplo.Predicao(P = 1.013) 
+exemplo.Predicao('Pressao',1.013) 
     # Caracterização dos pontos experimentais
-comp_vap = array([0.00000000001,0.044,0.085,0.132,0.175,0.227,0.276,0.328,0.380,0.433,0.481,0.538,0.586,0.639,0.688,0.745,0.796,0.840,0.901,0.951,0.9999999999999]) # MOLAR
-comp_liq = array([0.00000000001,0.129,0.232,0.325,0.403,0.463,0.517,0.571,0.609,0.651,0.685,0.719,0.749,0.777,0.803,0.835,0.867,0.898,0.929,0.965,0.9999999999999]) # MOLAR
-comp = [comp_liq,comp_vap]
-T = array([351.44,348.91,346.65,344.53,342.69,341.17,339.81,338.39,337.32,336.24,335.37,334.51,333.78,333.06,332.43,331.81,331.20,330.66,330.17,329.69,329.26])
+comp_vap = [0.00000000001,0.044,0.085,0.132,0.175,0.227,0.276,0.328,0.380,0.433,0.481,0.538,0.586,0.639,0.688,0.745,0.796,0.840,0.901,0.951,0.9999999999999] # MOLAR
+comp_liq = [0.00000000001,0.129,0.232,0.325,0.403,0.463,0.517,0.571,0.609,0.651,0.685,0.719,0.749,0.777,0.803,0.835,0.867,0.898,0.929,0.965,0.9999999999999] # MOLAR
+T = [351.44,348.91,346.65,344.53,342.69,341.17,339.81,338.39,337.32,336.24,335.37,334.51,333.78,333.06,332.43,331.81,331.20,330.66,330.17,329.69,329.26]
     # Incertezas da temperatura
-yerr = array([0.05]*21)
-
-Graficos('Txy',Componentes, exemplo.Composicao_x1,exemplo.Temperatura_Ponto_Bolha, exemplo.Temperatura_Ponto_Orvalho, x_experimentais = comp ,y_experimentais = T, y_incertezas = yerr, P = 1.013 )
-
+yerr = array([0.05]*21).tolist()
+Graficos('Txy',exemplo, x_experimentais = comp_liq, y_experimentais=comp_vap ,T_exp = T, T_incertezas = yerr, P_exp = 1.013 )
     

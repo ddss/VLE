@@ -17,26 +17,38 @@ Referências:
 
 @author: CaiqueFerreira
 """
+# Construção de gráficos
+from matplotlib.pyplot import figure, close, plot, xlabel, ylabel, title, xlim, legend, grid, show, figure, errorbar
 
-from matplotlib.pyplot import plot, xlabel, ylabel, title, xlim, legend, grid, show, figure, errorbar
+# Pacotes do sistema operacional
+from os import getcwd, sep, mkdir, path
 
 class Graficos:
 
-    def __init__(self,Diagrama,VLE,x_experimentais = None,y_experimentais = None, y_incertezas = None, x_incertezas = None, T = None, P = None, P_incertezas = None, T_incertezas = None):
+    def __init__(self,Diagrama,VLE,**kwargs):
+
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
         
-        ========
-        Entradas
-        ========
+        =====================
+        Entradas obrigatórias
+        =====================
 
         * Diagrama (str): O tipo de diagrama ou gráficor que se pretende realizar;
         * VLE (objeto): objeto VLE após execuação do método Predicao executado
-        * x_experimentais (list):
-        * y_experimentais (array):
-        * y_incertezas (array):
-        * T (float): A temperatura da mistura em Kelvin;
-        * P (float): A pressão em bar.
+        
+        ==============================
+        Keywords (Entradas opcionais):
+        ==============================
+        
+        * x_experimentais (list): Valores experimentais das composições da fase líquida;
+        * y_experimentais (list): Valores experimentais das composições da fase de vapor;
+        * T_exp (float or list): A(s) temperatura(s) da mistura em Kelvin, será float caso for constante e list caso for variável;
+        * P_exp (float or list): As pressões em bar, será float caso for constante e list caso for variável;
+        * x_incertezas (list): Valores das incertezas das composições da fase líquida;
+        * y_incertezas (list): Valores das incertezas das composições da fase de vapor;
+        * T_incertezas (float): Valores das incertezas das temperaturas da mistura em Kelvin;
+        * P_incertezas (float): Valores das incertezas das pressões em bar.
         
         =======
         Métodos
@@ -57,26 +69,26 @@ class Graficos:
         Neste exemplo, será calculado o ponto de bolha utilizando o método correspondente. A mistura utilizada será Acetona-Metanol, os modelos para as fases líquida e de vapor são, respectivamente
         UNIQUAC e VIRIAL com a regra de Hayden O'Connel, a temperatura será 330.0 K e a pressão 1.013 bar. ::
         
-            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
-            from VLE import VLE
+            >>> from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            >>> from VLE import VLE
             
-            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
-            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            >>> Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            >>> Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
                 
-            Componentes = [Comp1,Comp2]
+            >>> Componentes = [Comp1,Comp2]
             
-            model_vap = VIRIAL(Componentes)
-            model_liq = UNIQUAC(Componentes,330.0,1)
+            >>> model_vap = VIRIAL(Componentes)
+            >>> model_liq = UNIQUAC(Componentes,330.0,1)
             
-            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            >>> CalculoBolha = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
         
         Após este passo, é acessado o método de predição, para caracterizar os gráficos. ::
         
-            CalculoBolha.Predicao(330.0)
+            >>> CalculoBolha.Predicao(330.0)
             
         Em seguida, pode plotado o diagrama Pxy, conforme consta em [1].  ::
         
-            Graficos('Pxy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
+            >>> Graficos('Pxy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
         
         =========
         Exemplo 2        
@@ -84,26 +96,26 @@ class Graficos:
         
         Os passos deste exemplo são idênticos aos do Exemplo 1. ::
         
-            from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
-            from VLE import VLE
+            >>> from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
+            >>> from VLE import VLE
             
-            Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
-            Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            >>> Comp1 = Componente_Caracterizar('Acetona',ConfigPsat=('Prausnitz4th',1),T=330.0)
+            >>> Comp2 = Componente_Caracterizar('Metanol',ConfigPsat=('Prausnitz4th',1),T=330.0)
                 
-            Componentes = [Comp1,Comp2]
+            >>> Componentes = [Comp1,Comp2]
             
-            model_vap = VIRIAL(Componentes)
-            model_liq = UNIQUAC(Componentes,330.0,1)
+            >>> model_vap = VIRIAL(Componentes)
+            >>> model_liq = UNIQUAC(Componentes,330.0,1)
             
-            CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+            >>> CalculoBolha = VLE('PontoBolha',Componentes,model_liq,model_vap,z=[0.95,0.05],Temp=330.0,Pressao=1.013,estgama=None,estphi=None,estBeta = 0.5,tolAlg=1e-5,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
         
         Após este passo, é acessado o método de predição, para caracterizar os gráficos. ::
         
-            CalculoBolha.Predicao(330.0)
+            >>> CalculoBolha.Predicao(330.0)
         
         Em seguida, pode plotado o diagrama xy para os componentes, conforme consta em [1].  ::
         
-            Graficos('xy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2,T = 330.0)  
+            >>> Graficos('xy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2,T = 330.0)  
         
         Os gráficos são gerados automaticamente.
         
@@ -114,16 +126,25 @@ class Graficos:
         [1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.        
         '''
-        # TODO: converter para keywargs
+        
+        self.__validacaoArgumentosEntrada(kwargs)
         #==============================================================================
         #         Definição das variáveis
         #==============================================================================
-        self.T  = T
-        self.P_exp  = P
-        self.P_incertezas = P_incertezas
-        self.x_exp = x_experimentais
-        self.y_exp = y_experimentais
-        self.y_incertezas = y_incertezas
+        self.x_exp = kwargs.get(self.__keywordsEntrada[0])
+        self.y_exp = kwargs.get(self.__keywordsEntrada[1])
+        self.T_exp = kwargs.get(self.__keywordsEntrada[2])
+        self.P_exp = kwargs.get(self.__keywordsEntrada[3])
+        self.x_incertezas = kwargs.get(self.__keywordsEntrada[4])
+        self.y_incertezas = kwargs.get(self.__keywordsEntrada[5])
+        self.T_incertezas = kwargs.get(self.__keywordsEntrada[6])
+        self.P_incertezas = kwargs.get(self.__keywordsEntrada[7])
+        
+        # Cria caminho para salvar os gráficos
+        self.base_path = getcwd() + sep +'Graficos termodinamicos'+sep
+        # Cria o dirétorio do caminho  
+        if path.exists(self.base_path) is False:
+            mkdir(self.base_path)
         
         if Diagrama == 'Pxy':
             
@@ -131,12 +152,64 @@ class Graficos:
         
         elif Diagrama == 'Txy':
              
-            self.T_x_y()
+            self.T_x_y(VLE)
         
         elif Diagrama == 'xy':
             
             self.x_y()
             
+    def __validacaoArgumentosEntrada(self,keywargs):
+        
+        self.__keywordsEntrada = ['x_experimentais','y_experimentais','T_exp','P_exp','x_incertezas','y_incertezas','T_incertezas','P_incertezas']
+        
+        #==============================================================================
+        #         # Validação se houve keywords digitadas incorretamente:
+        #==============================================================================
+        keyincorreta  = [key for key in keywargs.keys() if not key in self.__keywordsEntrada]
+        
+        if len(keyincorreta) != 0:
+            raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
+        
+        #==============================================================================
+        #  Validação se houve a presença das incertezas sem os pontos experimentais
+        #==============================================================================
+        # Validação da composição da fase líquida
+        if keywargs.get(self.__keywordsEntrada[0]) is None:
+            if keywargs.get(self.__keywordsEntrada[4]) is not None:
+                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
+        # Validação da composição da fase de vapor
+        if keywargs.get(self.__keywordsEntrada[1]) is None:
+            if keywargs.get(self.__keywordsEntrada[5]) is not None:
+                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
+        # Validação da temperatura
+        if keywargs.get(self.__keywordsEntrada[2]) is None:
+            if keywargs.get(self.__keywordsEntrada[6]) is not None:
+                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
+        # Validação da pressão
+        if keywargs.get(self.__keywordsEntrada[3]) is None:
+            if keywargs.get(self.__keywordsEntrada[7]) is not None:
+                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
+
+        #==============================================================================
+        #  Validação se houve a presença dos pares das composiões e de suas incertezas
+        #==============================================================================
+        # Validação da composição da fase líquida
+        if keywargs.get(self.__keywordsEntrada[0]) is None: # Caso não for inserido a composição da fase líquida
+            if keywargs.get(self.__keywordsEntrada[1]) is not None: # E for inserido a composição da fase de vapor
+                raise ValueError(u'Faz-se necessário que todas as composições sejam argumentos de entrada.')
+        else: # Caso for inserido a composição da fase líquida
+            if keywargs.get(self.__keywordsEntrada[1]) is None: # E não for inserido a composição da fase de vapor
+                raise ValueError(u'Faz-se necessário que todas as composições sejam argumentos de entrada.')
+            else: # Caso também for inserido a composição da fase líquida
+                # Validação das incertezas, caso for inserido as duas composições
+                if keywargs.get(self.__keywordsEntrada[4]) is None: # Caso não for inserida a incerteza da composição da fase líquida
+                    if keywargs.get(self.__keywordsEntrada[5]) is not None: # E for inserida a incerteza da composição da fase de vapor
+                        raise ValueError(u'Faz-se necessário que todas incertezas das composições sejam argumentos de entrada.')
+                else: # Caso for inserida a incerteza da composição da fase líquida
+                    if keywargs.get(self.__keywordsEntrada[5]) is None: # E não for inserida a incerteza da composição da fase de vapor
+                        raise ValueError(u'Faz-se necessário que todas incertezas das composições sejam argumentos de entrada.')
+                                
+                
     def P_x_y(self,VLE):
         '''
         Método para criação do diagrama Pxy, pressão em função das composições, vide [1].
@@ -155,35 +228,47 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
+        fig = figure()
+        fig.add_subplot(1,1,1) 
         #==============================================================================
         #         Plotagem dos pontos calculados
         #==============================================================================
-        plot(VLE.Bolha.comp[0],VLE.Bolha.Pressao,'-',color ='green')
-        plot(VLE.Orvalho.comp[0],VLE.Orvalho.Pressao,'-',color ='blue')
+        plot(VLE.Bolha.comp_molar[0],VLE.Bolha.Pressao,'-',color ='green')
+        plot(VLE.Orvalho.comp_molar[0],VLE.Orvalho.Pressao,'-',color ='blue')
+
+        #==============================================================================
+        #         Plotagem dos pontos experimentais
+        #==============================================================================
         
-        if self.y_exp is not None:
-            # TODO: usar quando definido
-            print 'aqui'
-            # ==============================================================================
-            #         Plotagem dos pontos experimentais
-            # ==============================================================================
-            #plot(self.x_exp,self.P_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
-            #plot(self.y_exp,self.P_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
-            # ==============================================================================
-            #         Plotagem das incertezas
-            # ==============================================================================
-            errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-            errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-        
+        if self.x_exp and self.P_exp is not None:
+            plot(self.x_exp,self.P_exp, ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            plot(self.y_exp,self.P_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            
+            if self.P_incertezas is not None:
+                # ==============================================================================
+                #         Plotagem das incertezas de P
+                # ==============================================================================
+                errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                
+                if self.x_incertezas is not None:
+                    # ==============================================================================
+                    #         Plotagem das incertezas das composições
+                    # ==============================================================================
+                    errorbar(self.x_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                    errorbar(self.y_exp,self.P_exp,yerr=self.P_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                                                                    
         xlabel(u'x,y')
         ylabel(u'Pressão /bar')
-#        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.T))
+        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,self.T_exp))
         xlim(0,1)
         legend(['Dew Pressure','Bubble Pressure'],loc='best')
         grid() # Adiciona a grade ao gráfico
         show()
+        fig.savefig(self.base_path+'Diagrama_P_x_y.png')
+        close()
 
-    def T_x_y(self):
+    def T_x_y(self,VLE):
         '''
         Método para criação do diagrama Txy, temperatura em função das composições, vide [1].
         
@@ -201,31 +286,45 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
+        fig = figure()
+        fig.add_subplot(1,1,1) 
         #==============================================================================
         #         Plotagem dos pontos calculados
         #==============================================================================
-        plot(self.x1,self.y1,'-',color ='green')
-        plot(self.x1,self.y2,'-',color ='blue')
+        plot(VLE.Bolha.comp_molar[0],VLE.Bolha.Temp,'-',color ='green')
+        plot(VLE.Orvalho.comp_molar[0],VLE.Orvalho.Temp,'-',color ='blue')
+
+        #==============================================================================
+        #         Plotagem dos pontos experimentais
+        #==============================================================================
         
-        if self.y_exp != None:
-            #==============================================================================
-            #         Plotagem dos pontos experimentais
-            #==============================================================================
-            plot(self.x_exp[0],self.y_exp, ':',markeredgecolor ='yellow', marker="o", markerfacecolor="w")
-            plot(self.x_exp[1],self.y_exp,':',markeredgecolor ='cyan', marker="o", markerfacecolor="k")
-            #==============================================================================
-            #         Plotagem das incertezas
-            #==============================================================================
-            errorbar(self.x_exp[0],self.y_exp,self.y_incertezas,fmt='o', ecolor='g')
-            errorbar(self.x_exp[1],self.y_exp,self.y_incertezas,fmt='o', ecolor='b')
+        if self.x_exp and self.T_exp is not None:
+            plot(self.x_exp,self.T_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            plot(self.y_exp,self.T_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            
+            if self.T_incertezas is not None:
+                # ==============================================================================
+                #         Plotagem das incertezas de P
+                # ==============================================================================
+                errorbar(self.x_exp,self.T_exp,yerr=self.T_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                errorbar(self.y_exp,self.T_exp,yerr=self.T_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                
+                if self.x_incertezas is not None:
+                    # ==============================================================================
+                    #         Plotagem das incertezas das composições
+                    # ==============================================================================
+                    errorbar(self.x_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+                    errorbar(self.y_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
         
         xlabel(u'x,y')
         ylabel(u'Temperatura /K')
-        title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(self.Componentes[0].nome,self.Componentes[1].nome,self.P))
+        title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,self.P_exp))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
         grid() # Adiciona a grade ao gráfico
         show()
+        fig.savefig(self.base_path+'Diagrama_T_x_y.png')
+        close()
         
     def x_y(self):
         '''
@@ -247,7 +346,7 @@ class Graficos:
 
         '''
         fig = figure() # Adiciona a figura
-        fig.add_subplot(111)
+        fig.add_subplot(1,1,1)
         plot(self.x1,self.y1,'-') 
         xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[0].nome))
         ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[0].nome))
@@ -257,7 +356,7 @@ class Graficos:
         grid() # Adiciona a grade ao gráfico
 
         fig = figure() # Adiciona a figura
-        fig.add_subplot(111)
+        fig.add_subplot(1,1,1)
         plot(self.x2,self.y2,'-')
         xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[1].nome))
         ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[1].nome))
@@ -266,3 +365,4 @@ class Graficos:
         
         grid() # Adiciona a grade ao gráfico
         show() # Mostra os gráficos
+        close()

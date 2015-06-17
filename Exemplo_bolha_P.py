@@ -19,20 +19,20 @@ Componentes = [Comp1,Comp2]
 model_vap = VIRIAL(Componentes)
 model_liq = UNIQUAC(Componentes,313.15,1)
 
-exemplo = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.3703,1-0.3703],Temp=313.15,Pressao=1.013,estphi=[1.0,1.0],estBeta = 0.5,tolAlg=1e-10,toleq=1e-4,maxiter=1000,z_coordenacao=10.0)
-exemplo.start()
-exemplo.join()
+exemplo = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.3703,1-0.3703],Temp=313.15,Pressao=1.013)
+exemplo.run()
 
-print exemplo.Bolha.comp
-print exemplo.liquido.comp
+print exemplo.Bolha.Pressao
+print exemplo.Bolha.comp_molar
 # Caracterização do gráfico
     # Caracterização do gráfico teórico
-exemplo.Predicao(T = 313.15)
+exemplo.Predicao('Temperatura',313.15)
     # Caracterização dos pontos experimentais
-comp_vap = array([0.00000000001,0.1725,0.2630,0.3072,0.2746,0.3072,0.3703,0.3736,0.3872,0.4023,0.4215,0.4452,0.4778,0.5284,0.5737,0.5934,0.6596,0.7169,0.8029,0.8795,0.9999999999999]) # MOLAR
-comp_liq = array([0.00000000001,0.0293,0.0823,0.1602,0.1942,0.3055,0.3703,0.4357,0.4981,0.5587,0.6218,0.6826,0.7438,0.8103,0.8516,0.8662,0.9052,0.9303,0.9586,0.9776,0.9999999999999]) # MOLAR
+comp_vap = [0.00000000001,0.1725,0.2630,0.3072,0.2746,0.3072,0.3703,0.3736,0.3872,0.4023,0.4215,0.4452,0.4778,0.5284,0.5737,0.5934,0.6596,0.7169,0.8029,0.8795,0.9999999999999] # MOLAR
+comp_liq = [0.00000000001,0.0293,0.0823,0.1602,0.1942,0.3055,0.3703,0.4357,0.4981,0.5587,0.6218,0.6826,0.7438,0.8103,0.8516,0.8662,0.9052,0.9303,0.9586,0.9776,0.9999999999999] # MOLAR
 P = 0.01*array([24.367,28.831,31.544,32.764,33.015,33.381,33.365,33.276,33.121,32.849,32.388,31.704,30.672,28.991,27.464,26.914,24.938,23.446,21.506,19.938,17.897])
-    # Incertezas da temperatura
-yerr = array([0.001]*21)
+P = P.tolist()
+# Incertezas da temperatura
+yerr = array([0.001]*21).tolist()
 
-Graficos('Pxy',exemplo, x_experimentais = comp_liq, y_experimentais=comp_vap ,P = P, P_incertezas = yerr, T = 313.15 )
+Graficos('Pxy',exemplo, x_experimentais = comp_liq, y_experimentais=comp_vap ,P_exp = P, P_incertezas = yerr, T_exp = 313.15 )
