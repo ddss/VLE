@@ -950,6 +950,7 @@ class VLE(Thread):
         
         As seguintes saídas são em forma de atributos.
         
+        * ``vapor``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``liquido``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``Bolha``: Um objeto da classe ``Condicao``, vide documentação da classe.
         
@@ -990,7 +991,7 @@ class VLE(Thread):
         self.liquido = Condicao(P[cont-1],T,x,None,coefAct)
         self.vapor   = self.Bolha
 
-    def PontoBolha_T(self,x,P):
+    def PontoBolha_T(self,x,P,Testimativa=None):
         ''' 
         Módulo para calcular o ponto de bolha segundo [1] e [2], quando a pressão e composição são conhecidas.
 
@@ -1000,6 +1001,7 @@ class VLE(Thread):
         
         
         * P (float): Pressão em bar;
+        * Testimativa (float): Estimativa para temperatura em Kelvin;
         * x (list): Composição da fase líquida.
         
         ======
@@ -1008,6 +1010,7 @@ class VLE(Thread):
         
         As seguintes saídas são em forma de atributos.
         
+        * ``vapor``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``liquido``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``Bolha``: Um objeto da classe ``Condicao``, vide documentação da classe.
         
@@ -1027,8 +1030,12 @@ class VLE(Thread):
         
         # Normalização do valor de x
         x = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
         
+        if Testimativa is None:
+            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
+        else:
+            T = Testimativa
+            
         coeffug  = self.estphi
         cont   = 0; deltaT = 10        
         while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
@@ -1076,6 +1083,7 @@ class VLE(Thread):
         As seguintes saídas são em forma de atributos.
         
         * ``vapor``: Um objeto da classe ``Condicao``, vide documentação da classe;
+        * ``liquido``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``Orvalho``: Um objeto da classe ``Condicao``, vide documentação da classe.
         
         ===========
@@ -1127,6 +1135,7 @@ class VLE(Thread):
         ========
         
         * P (float): Pressão em bar;
+        * Testimativa (float): Estimativa para temperatura em Kelvin;
         * y (list): Composição da fase vapor.
         
         ======
@@ -1136,6 +1145,7 @@ class VLE(Thread):
         As seguintes saídas são em forma de atributos.
         
         * ``vapor``: Um objeto da classe ``Condicao``, vide documentação da classe;
+        * ``liquido``: Um objeto da classe ``Condicao``, vide documentação da classe;
         * ``Orvalho``: Um objeto da classe ``Condicao``, vide documentação da classe.
         
         ===========
@@ -1285,7 +1295,7 @@ class VLE(Thread):
 	    self.Orvalho = Condicao(P,T,x[cont],None,coefAct) # configuração da fase líquida
 	    self.Bolha   = Condicao(P,T,y[cont],coeffug,None) # configuração da fase vapor
 	    self.Beta    = V[cont]
-	    self.Global  = Condicao(P,T,z,None,None) # Configuração da condição global
+	    self.condicao_global  = Condicao(P,T,z,None,None) # Configuração da condição global
 	else:
 	    
 	    raise ValueError(u'Não é possível realizar o cálculo de Flash, dado que a condição de equilíbrio não é satisfeita.') 
