@@ -1,24 +1,33 @@
-Rotinas para C·lculo do EquilÌbrio de fases em Misturas atravÈs da abordagem gamma-phi
+# Vapor Liquid Equilibrium
 
-Modelos termodin‚micos:
+* Rotinas para c√°lculos de equil√≠brio de fases em misturas, desde os pontos de bolha e orvalho aos c√°lculos de flash, atrav√©s da abordagem gamma-phi.
+
+Para os c√°lculos de gamma, os seguintes modelos termodin√¢micos est√£o dispon√≠veis:
     - UNIQUAC
-    - VIRIAL
     - NRTL
     - WILSON
     - Van Laar
+    
+Para os c√°lculos de phi, as seguintes equa√ß√µes de estado est√£o dispon√≠veis:
+    - VIRIAL
+        - Hayden O'Connell
+        - Tsonopoulos
 
-MÈtodos:
-    - Second_Virial_Coef: C·lculo do segundo coeficiente do Virial
-    - Coeficiente_Atividade: C·lculo do Coeficiente de Atividade
-    - Coeficiente_Fugacidade: C·lculo do Coeficiente de Fugacidade
-    - Flash: C·culo de um flash (Incompleto)
-    - PhiSat: C·lculo do coeficiente de fugacidade nas condiÁıes de saturaÁ„o
-    - PontoBolha_P: C·lculo do ponto de bolha (T conhecido) (Dado: x, T/K -> C·lcula: y, P/bar)
-    - PontoOrvalho_P: C·lculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> C·lcula: x, P/bar)
-    - PontoBolha_T: C·lculo do ponto de bolha (P conhecido) (Dado: x, P/bar -> C·lcula: y, T/K)
-    - PontoOrvalho_T: C·lculo do ponto de orvalho (P conhecido) (Dado: y, P/bar -> C·lcula: x, T/K)
+Os m√©todos dispon√≠veis na rotina VLE, rotina caracter√≠stica dos c√°lculos termodin√¢micos s√£o:
 
-ReferÍncias:
+    - Second_Virial_Coef: C√°lculo do segundo coeficiente do Virial
+    - Coeficiente_Atividade: C√°lculo do coeficiente de atividade
+    - Coeficiente_Fugacidade: C√°lculo do coeficiente de fugacidade
+    - Flash: C√°culo de um flash
+    - PhiSat: C√°lculo do coeficiente de fugacidade nas condi√ß√µes de satura√ß√£o
+    - PontoBolha_P: C√°lculo do ponto de bolha (T conhecido) (Dado: x, T/K -> C√°lcula: y, P/bar)
+    - PontoOrvalho_P: C√°lculo do ponto de orvalho (T conhecido) (Dado: y, T/K -> C√°lcula: x, P/bar)
+    - PontoBolha_T: C√°lculo do ponto de bolha (P conhecido) (Dado: x, P/bar -> C√°lcula: y, T/K)
+    - PontoOrvalho_T: C√°lculo do ponto de orvalho (P conhecido) (Dado: y, P/bar -> C√°lcula: x, T/K)
+
+As demais rotinas realizam trabalhos auxiliares como conex√µes, busca, caracteriza√ß√£o de dados, plotagem de gr√°ficos, etc.
+
+Refer√™ncias:
 - PRAUSNITZ, J. M. et al. Computer Calculations for multicomponent vapor-liquid and liquid-liquid equilibria. [s.l.] Prendice-Hall, 1980. p. 353
 - HAYDEN, J. G.; O'CONNELL, J. P. A Generalized Method for Predicting Second Virial Coefficients. Industrial & Engineering Chemistry Process Design
   and Development, v. 14, n. 3, p. 209-216, jul. 1975.
