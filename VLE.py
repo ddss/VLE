@@ -102,13 +102,10 @@ class Condicao:
         mm_comp = kwargs.get(keywordsEntrada[0])
         NC = kwargs.get(keywordsEntrada[1])
 
-        if NC and mm_comp is not None:
+        if NC is not None and mm_comp is not None:
             # Cálculo da composição mássica
             mm_medio = sum([self.comp_molar[0]*mm_comp[0],self.comp_molar[1]*mm_comp[1]]) # em g/mol
             self.comp_massica = [mm_comp[i]*self.comp_molar[i]/mm_medio for i in xrange(NC)]
-
-
-
 
 class VLE(Thread):        
 
@@ -1297,7 +1294,7 @@ class VLE(Thread):
         Entradas
         ========
         
-        * Constante (str): Nome da variável que será mantida constante: Temperatura ou Pressao;
+        * Constante (str): Nome da variável que será mantida constante: temperatura ou pressao;
         * Valor_cte (float): Valor da constante de acordo com a variável inserida em *Constante*.
         
         ======
@@ -1317,11 +1314,10 @@ class VLE(Thread):
         keywordsEntrada = ['pressao','temperatura']
         
         # Validação se a string Constante foi digitada incorretamente:
-        if abs(Constante not in keywordsEntrada) != 0:
-            keyincorreta = [Constante]
-            raise NameError(u'keyword(s) incorretas para as constantes: '+', '.join(keyincorreta)+'.'+u' Keywords das constantes disponíveis: '+', '.join(keywordsEntrada)+'.')
+        if Constante not in keywordsEntrada:
+            raise NameError(u'keyword(s) incorretas para as constantes: '+', '.join([Constante])+'.'+u' Keywords das constantes disponíveis: '+', '.join(keywordsEntrada)+'.')
         
-        if Constante == 'temperatura':        
+        if Constante == keywordsEntrada[1]:
             
             T = Valor_cte
             # Criação do eixo X para fazer os gráficos
@@ -1358,7 +1354,7 @@ class VLE(Thread):
             self.Bolha   = Condicao(Pressao_Ponto_Bolha,T,[y_1,y_2],None,None)
             self.Orvalho = Condicao(Pressao_Ponto_Orvalho,T,[x_1,x_2],None,None)
         
-        elif Constante == 'pressao':
+        elif Constante == keywordsEntrada[0]:
             
             P = Valor_cte
             # Criação do eixo X para fazer os gráficos
