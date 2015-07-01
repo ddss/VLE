@@ -25,7 +25,7 @@ from os import getcwd, sep, mkdir, path
 
 class Graficos:
 
-    def __init__(self,Diagrama,VLE,**kwargs):
+    def __init__(self,**kwargs):
 
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
@@ -88,7 +88,8 @@ class Graficos:
             
         Em seguida, pode plotado o diagrama Pxy, conforme consta em [1].  ::
         
-            >>> Graficos('Pxy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
+            >>> Graficos(CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
+            >>> Graficos.T_x_y(CalculoBolha)
         
         =========
         Exemplo 2        
@@ -145,25 +146,13 @@ class Graficos:
         # Cria o dirétorio do caminho  
         if path.exists(self.base_path) is False:
             mkdir(self.base_path)
-        
-        if Diagrama == 'Pxy':
-            
-            self.P_x_y(VLE)
-        
-        elif Diagrama == 'Txy':
-             
-            self.T_x_y(VLE)
-        
-        elif Diagrama == 'xy':
-            
-            self.x_y()
-            
+
     def __validacaoArgumentosEntrada(self,keywargs):
         
         self.__keywordsEntrada = ['x_experimentais','y_experimentais','T_exp','P_exp','x_incertezas','y_incertezas','T_incertezas','P_incertezas']
         
         #==============================================================================
-        #         # Validação se houve keywords digitadas incorretamente:
+        # Validação se houve keywords digitadas incorretamente:
         #==============================================================================
         keyincorreta  = [key for key in keywargs.keys() if not key in self.__keywordsEntrada]
         
@@ -171,35 +160,35 @@ class Graficos:
             raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
 
         #==============================================================================
-        #  Validação se houve a presença dos pares das composiões e de suas incertezas
+        # Validação se houve a presença dos pares das composiões e de suas incertezas
         #==============================================================================
-        # Validação da composição da fase líquida
-        if keywargs.get(self.__keywordsEntrada[0]) is None: # Caso não for inserido a composição da fase líquida
-            if keywargs.get(self.__keywordsEntrada[1]) is not None: # E for inserido a composição da fase de vapor
-                raise ValueError(u'Faz-se necessário que todas as composições sejam argumentos de entrada.')
-        else: # Caso for inserido a composição da fase líquida
-            if keywargs.get(self.__keywordsEntrada[1]) is None: # E não for inserido a composição da fase de vapor
-                raise ValueError(u'Faz-se necessário que todas as composições sejam argumentos de entrada.')
-            else: # Caso também for inserido a composição da fase líquida
-                # Validação das incertezas, caso for inserido as duas composições
-                if keywargs.get(self.__keywordsEntrada[4]) is None: # Caso não for inserida a incerteza da composição da fase líquida
-                    if keywargs.get(self.__keywordsEntrada[5]) is not None: # E for inserida a incerteza da composição da fase de vapor
-                        raise ValueError(u'Faz-se necessário que todas incertezas das composições sejam argumentos de entrada.')
-                else: # Caso for inserida a incerteza da composição da fase líquida
-                    if keywargs.get(self.__keywordsEntrada[5]) is None: # E não for inserida a incerteza da composição da fase de vapor
-                        raise ValueError(u'Faz-se necessário que todas incertezas das composições sejam argumentos de entrada.')
+        # Caso definido alguma composição experimental, é necessário definir a outra
+        if self.__keywordsEntrada[0] in keywargs.keys() or self.__keywordsEntrada[1] in keywargs.keys():
+            # Se as keywords 'x_experimentais','y_experimentais' não estiverem em keywargs.keys, erro.
+            if not {self.__keywordsEntrada[0],self.__keywordsEntrada[1]}.issubset(keywargs.keys()):
+                raise ValueError(u'Caso seja definido alguma composição experimental, faz-se necessário definir todas, tanto do líquido quanto do vapor como argumentos de entrada.')
+
+        # Caso definido alguma incerteza experimental, é necessário definir a outra, bem como as composições
+        if self.__keywordsEntrada[4] in keywargs.keys() or self.__keywordsEntrada[5] in keywargs.keys():
+            # Se as keywords 'x_experimentais','y_experimentais', 'x_incertezas','y_incertezas' não estiverem em keywargs.keys, erro.
+            if not {self.__keywordsEntrada[0],self.__keywordsEntrada[1],self.__keywordsEntrada[4],self.__keywordsEntrada[5]}.issubset(keywargs.keys()):
+                raise ValueError(u'Caso seja definido alguma inerteza, faz-se neessário definir as composição experimentais para as fases líquida e vapor, bem como suas respectivas incertezas.')
 
         #==============================================================================
-        #  Validação se houve a presença das incertezas sem os pontos experimentais
+        # Validação dos tipos de variáveis para temperatura e pressão
         #==============================================================================
-        # Validação da composição da fase líquida
-        if keywargs.get(self.__keywordsEntrada[0]) is None:
-            if keywargs.get(self.__keywordsEntrada[4]) is not None:
-                raise ValueError(u'Foi inserida informação para a incerteza de x, entretanto não foram inseridos dados de x e y.')
-        # Validação da composição da fase de vapor
-        if keywargs.get(self.__keywordsEntrada[1]) is None:
-            if keywargs.get(self.__keywordsEntrada[5]) is not None:
-                raise ValueError(u'Foi inserida informação para a incerteza de y, entretanto não foram inseridos dados de x e y.')
+        if keywargs.get(self.__keywordsEntrada[2]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[2]),list):
+                 raise TypeError('A temperatura deve ser iserida como um LISTA.')
+
+        if keywargs.get(self.__keywordsEntrada[3]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[3]),list):
+                 raise TypeError('As pressões devem ser inseridas em uma LISTA.')
+
+        #==============================================================================
+        # Validação se houve a presença das incertezas sem os pontos experimentais
+        #==============================================================================
+
         # Validação da temperatura
         if keywargs.get(self.__keywordsEntrada[2]) is None:
             if keywargs.get(self.__keywordsEntrada[6]) is not None:
@@ -209,12 +198,18 @@ class Graficos:
             if keywargs.get(self.__keywordsEntrada[7]) is not None:
                 raise ValueError(u'Foi inserida informação para a incerteza da pressão, entretanto não foram inseridos dados de pressão.')
 
-                                
-                
-    def P_x_y(self,VLE):
+    def P_x_y(self,VLE,T,unidT='K'):
         '''
         Método para criação do diagrama Pxy, pressão em função das composições, vide [1].
-        
+
+        =======
+        Entrada
+        =======
+
+        * VLE (objeto)  : Objeto VLE que executou o método Predicao
+        * T (float)     : temperatura para a qual foi executado
+        * unidT (string): unidade da temperatura
+
         ======
         Saídas
         ======
@@ -227,18 +222,8 @@ class Graficos:
         
         [1] SMITH, J. M.; NESS, H. C. V.; ABBOTT, M. M. Introduction to 
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
-
         '''
-        #==============================================================================
-        #        Validação das constantes P e T
-        #==============================================================================
-        
-        if not isinstance(self.T_exp,(float,int)):
-             raise TypeError('A temperatura deve ser iserida como um FLOAT.')
-             
-        if not isinstance(self.P_exp,(list,array)):
-             raise TypeError('As pressões devem ser inseridas em uma LISTA.')
-        
+
         fig = figure()
         fig.add_subplot(1,1,1) 
         #==============================================================================
@@ -258,7 +243,7 @@ class Graficos:
                                                                     
         xlabel(u'x,y')
         ylabel(u'Pressão /bar')
-        title('Diagrama Pxy para {:s}-{:s} a {:.1f}K'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,self.T_exp))
+        title('Diagrama Pxy para {:s}-{:s} a {:.1f} {}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,T,unidT))
         xlim(0,1)
         legend(['Dew Pressure','Bubble Pressure'],loc='best')
         grid() # Adiciona a grade ao gráfico
@@ -340,6 +325,8 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
+        # TODO: CORRIGIR
+
         fig = figure() # Adiciona a figura
         fig.add_subplot(1,1,1)
         plot(self.x1,self.y1,'-') 
