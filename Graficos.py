@@ -251,7 +251,7 @@ class Graficos:
         fig.savefig(self.base_path+'Diagrama_P_x_y.png')
         close()
 
-    def T_x_y(self,VLE):
+    def T_x_y(self,VLE,P,unidP='bar'):
         '''
         Método para criação do diagrama Txy, temperatura em função das composições, vide [1].
         
@@ -269,16 +269,7 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
-        #==============================================================================
-        #        Validação das constantes P e T
-        #==============================================================================
-        
-        if not isinstance(self.P_exp,(float,int)):
-             raise TypeError('A pressão deve ser iserida como um FLOAT.')
-             
-        if not isinstance(self.T_exp,(list,array)):
-             raise TypeError('As temperaturas devem ser inseridas em uma LISTA.')
-             
+
         fig = figure()
         fig.add_subplot(1,1,1) 
         #==============================================================================
@@ -298,7 +289,7 @@ class Graficos:
         
         xlabel(u'x,y')
         ylabel(u'Temperatura /K')
-        title('Diagrama Txy para {:s}-{:s} a {:.3f} bar'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,self.P_exp))
+        title('Diagrama Txy para {:s}-{:s} a {:.3f} {}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,P,unidP))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
         grid() # Adiciona a grade ao gráfico

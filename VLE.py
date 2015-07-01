@@ -1118,7 +1118,7 @@ class VLE(Thread):
         self.Orvalho = Condicao(P[cont-1],T,x,None,coefAct)
         self.liquido = self.Orvalho
         
-    def PontoOrvalho_T(self,y,P):
+    def PontoOrvalho_T(self,y,P,Testimativa=None):
         ''' 
         Módulo para calcular o ponto de orvalho segundo [1] e [2], quando a pressão e composição são conhecidas.
 
@@ -1153,7 +1153,11 @@ class VLE(Thread):
         #==============================================================================
         # Normalização do valor de y
         y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-        T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
+
+        if Testimativa is None:
+            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
+        else:
+            T = Testimativa
         
         coeffug  = [1.0,1.0]
         coefAct  = [[1.0,1.0]]
