@@ -17,9 +17,9 @@ Referências:
 
 @author: CaiqueFerreira
 """
+from numpy import array
 # Construção de gráficos
 from matplotlib.pyplot import figure, close, plot, xlabel, ylabel, title, xlim, legend, grid, show, figure, errorbar
-
 # Pacotes do sistema operacional
 from os import getcwd, sep, mkdir, path
 
@@ -171,26 +171,6 @@ class Graficos:
             raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
 
         #==============================================================================
-        #  Validação se houve a presença das incertezas sem os pontos experimentais
-        #==============================================================================
-        # Validação da composição da fase líquida
-        if keywargs.get(self.__keywordsEntrada[0]) is None:
-            if keywargs.get(self.__keywordsEntrada[4]) is not None:
-                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
-        # Validação da composição da fase de vapor
-        if keywargs.get(self.__keywordsEntrada[1]) is None:
-            if keywargs.get(self.__keywordsEntrada[5]) is not None:
-                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
-        # Validação da temperatura
-        if keywargs.get(self.__keywordsEntrada[2]) is None:
-            if keywargs.get(self.__keywordsEntrada[6]) is not None:
-                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
-        # Validação da pressão
-        if keywargs.get(self.__keywordsEntrada[3]) is None:
-            if keywargs.get(self.__keywordsEntrada[7]) is not None:
-                raise ValueError(u'Faz-se necessário os pontos experimentais como argumentos de entrada.')
-
-        #==============================================================================
         #  Validação se houve a presença dos pares das composiões e de suas incertezas
         #==============================================================================
         # Validação da composição da fase líquida
@@ -208,6 +188,27 @@ class Graficos:
                 else: # Caso for inserida a incerteza da composição da fase líquida
                     if keywargs.get(self.__keywordsEntrada[5]) is None: # E não for inserida a incerteza da composição da fase de vapor
                         raise ValueError(u'Faz-se necessário que todas incertezas das composições sejam argumentos de entrada.')
+
+        #==============================================================================
+        #  Validação se houve a presença das incertezas sem os pontos experimentais
+        #==============================================================================
+        # Validação da composição da fase líquida
+        if keywargs.get(self.__keywordsEntrada[0]) is None:
+            if keywargs.get(self.__keywordsEntrada[4]) is not None:
+                raise ValueError(u'Foi inserida informação para a incerteza de x, entretanto não foram inseridos dados de x e y.')
+        # Validação da composição da fase de vapor
+        if keywargs.get(self.__keywordsEntrada[1]) is None:
+            if keywargs.get(self.__keywordsEntrada[5]) is not None:
+                raise ValueError(u'Foi inserida informação para a incerteza de y, entretanto não foram inseridos dados de x e y.')
+        # Validação da temperatura
+        if keywargs.get(self.__keywordsEntrada[2]) is None:
+            if keywargs.get(self.__keywordsEntrada[6]) is not None:
+                raise ValueError(u'Foi inserida informação para a incerteza da temperatura, entretanto não foram inseridos dados de temperatura.')
+        # Validação da pressão
+        if keywargs.get(self.__keywordsEntrada[3]) is None:
+            if keywargs.get(self.__keywordsEntrada[7]) is not None:
+                raise ValueError(u'Foi inserida informação para a incerteza da pressão, entretanto não foram inseridos dados de pressão.')
+
                                 
                 
     def P_x_y(self,VLE):
@@ -228,6 +229,16 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
+        #==============================================================================
+        #        Validação das constantes P e T
+        #==============================================================================
+        
+        if not isinstance(self.T_exp,(float,int)):
+             raise TypeError('A temperatura deve ser iserida como um FLOAT.')
+             
+        if not isinstance(self.P_exp,(list,array)):
+             raise TypeError('As pressões devem ser inseridas em uma LISTA.')
+        
         fig = figure()
         fig.add_subplot(1,1,1) 
         #==============================================================================
@@ -273,6 +284,16 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
+        #==============================================================================
+        #        Validação das constantes P e T
+        #==============================================================================
+        
+        if not isinstance(self.P_exp,(float,int)):
+             raise TypeError('A pressão deve ser iserida como um FLOAT.')
+             
+        if not isinstance(self.T_exp,(list,array)):
+             raise TypeError('As temperaturas devem ser inseridas em uma LISTA.')
+             
         fig = figure()
         fig.add_subplot(1,1,1) 
         #==============================================================================
@@ -285,23 +306,10 @@ class Graficos:
         #         Plotagem dos pontos experimentais
         #==============================================================================
         
-        if self.x_exp and self.T_exp is not None:
-            plot(self.x_exp,self.T_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-            plot(self.y_exp,self.T_exp,ls ='None',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+        if self.x_exp is not None and self.T_exp is not None and self.y_exp is not None:
             
-            if self.T_incertezas is not None:
-                # ==============================================================================
-                #         Plotagem das incertezas de P
-                # ==============================================================================
-                errorbar(self.x_exp,self.T_exp,yerr=self.T_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                errorbar(self.y_exp,self.T_exp,yerr=self.T_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                
-                if self.x_incertezas is not None:
-                    # ==============================================================================
-                    #         Plotagem das incertezas das composições
-                    # ==============================================================================
-                    errorbar(self.x_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
-                    errorbar(self.y_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            errorbar(self.x_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.x_incertezas,fmt='o', ecolor='g',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
+            errorbar(self.y_exp,self.T_exp,yerr=self.T_incertezas,xerr=self.y_incertezas,fmt='o', ecolor='b',markeredgecolor ='magenta', marker="o", markerfacecolor="w")
         
         xlabel(u'x,y')
         ylabel(u'Temperatura /K')

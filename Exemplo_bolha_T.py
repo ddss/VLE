@@ -30,7 +30,7 @@ print exemplo.Bolha.comp_molar
 
 # Caracterização do gráfico
     # Caracterização do gráfico teórico
-exemplo.Predicao('Pressao',1.013) 
+exemplo.Predicao('pressao',1.013) 
     # Caracterização dos pontos experimentais
 comp_vap = [0.00000000001,0.044,0.085,0.132,0.175,0.227,0.276,0.328,0.380,0.433,0.481,0.538,0.586,0.639,0.688,0.745,0.796,0.840,0.901,0.951,0.9999999999999] # MOLAR
 comp_liq = [0.00000000001,0.129,0.232,0.325,0.403,0.463,0.517,0.571,0.609,0.651,0.685,0.719,0.749,0.777,0.803,0.835,0.867,0.898,0.929,0.965,0.9999999999999] # MOLAR

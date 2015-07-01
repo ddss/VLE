@@ -30,7 +30,7 @@ print exemplo.Orvalho.comp_molar
 
 # Caracterização do gráfico
     # Caracterização do gráfico teórico
-exemplo.Predicao('Pressao',1.013) 
+exemplo.Predicao('pressao',1.013) 
     # Caracterização dos pontos experimentais
 comp_vap = [0.9999999999999,0.981,0.976,0.961,0.930,0.886,0.871,0.825,0.765,0.693,0.626,0.526,0.436,0.269,0.196,0.147,0.00000000001] # MOLAR
 comp_liq = [0.9999999999999,0.937,0.920,0.880,0.796,0.693,0.662,0.579,0.500,0.426,0.367,0.291,0.230,0.132,0.094,0.069,0.00000000001] # MOLAR

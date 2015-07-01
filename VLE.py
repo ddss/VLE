@@ -79,13 +79,13 @@ class Condicao:
         # VALIDAÇÃO
         # ----------------------------------------------------
         # Keywords disponíveis
-        __keywordsEntrada = ['massa_molar','numero_componentes','beta']
+        keywordsEntrada = ['massa_molar','numero_componentes','beta']
 
         # Validação se houve keywords digitadas incorretamente:
-        keyincorreta  = [key for key in kwargs.keys() if not key in __keywordsEntrada]
+        keyincorreta  = [key for key in kwargs.keys() if not key in keywordsEntrada]
 
         if len(keyincorreta) != 0:
-            raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(self.__keywordsEntrada)+'.')
+            raise NameError(u'keyword(s) incorretas: '+', '.join(keyincorreta)+'.'+u' Keywords disponíveis: '+', '.join(keywordsEntrada)+'.')
 
         # ----------------------------------------------------
         # EXECUÇÃO
@@ -99,8 +99,8 @@ class Condicao:
         self.beta     = kwargs.get('beta')
 
         # Caracterização dos kwargs
-        mm_comp = kwargs.get(__keywordsEntrada[0])
-        NC = kwargs.get(__keywordsEntrada[1])
+        mm_comp = kwargs.get(keywordsEntrada[0])
+        NC = kwargs.get(keywordsEntrada[1])
 
         if NC and mm_comp is not None:
             # Cálculo da composição mássica
@@ -991,6 +991,7 @@ class VLE(Thread):
         # Caracterização das fases
         self.Bolha   = Condicao(P[cont-1],T,y,coeffug,None)
         self.liquido = Condicao(P[cont-1],T,x,None,coefAct)
+        self.vapor   = self.Bolha
 
     def PontoBolha_T(self,x,P):
         ''' 
@@ -1057,6 +1058,7 @@ class VLE(Thread):
         # Caracterização das fases
         self.liquido = Condicao(P,T[cont],x,None,coefAct)
         self.Bolha   = Condicao(P,T[cont],y,coeffug,None)
+        self.vapor   = self.Bolha
         
     def PontoOrvalho_P(self,y,T):
         ''' 
@@ -1117,7 +1119,7 @@ class VLE(Thread):
 
         self.vapor   = Condicao(P[cont-1],T,y,coeffug,None)
         self.Orvalho = Condicao(P[cont-1],T,x,None,coefAct)
-
+        self.liquido = self.Orvalho
         
     def PontoOrvalho_T(self,y,P):
         ''' 
@@ -1191,6 +1193,7 @@ class VLE(Thread):
         # Caracterização da fase vapor
         self.vapor   = Condicao(P,T[cont],y,coeffug,None)
         self.Orvalho = Condicao(P,T[cont],x,None,coefAct)
+        self.liquido = self.Orvalho
         
     def Flash(self,z,T,P):
         '''        
@@ -1280,7 +1283,8 @@ class VLE(Thread):
           # Configuração das fases
 	    self.Orvalho = Condicao(P,T,x[cont],None,coefAct) # configuração da fase líquida
 	    self.Bolha   = Condicao(P,T,y[cont],coeffug,None) # configuração da fase vapor
-	    self.Beta     = V[cont]
+	    self.Beta    = V[cont]
+	    self.Global  = Condicao(P,T,z,None,None) # Configuração da condição global
 	else:
 	    
 	    raise ValueError(u'Não é possível realizar o cálculo de Flash, dado que a condição de equilíbrio não é satisfeita.') 
@@ -1306,13 +1310,18 @@ class VLE(Thread):
         * ``Orvalho``: Um objeto da classe ``Condicao``, vide documentação da classe.
         
         '''
-        # Validação da string Constante
-        if Constante not in ['Pressao','Temperatura']:
-            
-            raise NameError(u'A constante escolhida deve ser a temperatura ou pressão.')  # Emite um erro com a mensagem inserida no método
+        # ----------------------------------------------------
+        # VALIDAÇÃO
+        # ----------------------------------------------------
+        # Keywords disponíveis
+        keywordsEntrada = ['pressao','temperatura']
         
+        # Validação se a string Constante foi digitada incorretamente:
+        if abs(Constante not in keywordsEntrada) != 0:
+            keyincorreta = [Constante]
+            raise NameError(u'keyword(s) incorretas para as constantes: '+', '.join(keyincorreta)+'.'+u' Keywords das constantes disponíveis: '+', '.join(keywordsEntrada)+'.')
         
-        if Constante == 'Temperatura':        
+        if Constante == 'temperatura':        
             
             T = Valor_cte
             # Criação do eixo X para fazer os gráficos
@@ -1349,7 +1358,7 @@ class VLE(Thread):
             self.Bolha   = Condicao(Pressao_Ponto_Bolha,T,[y_1,y_2],None,None)
             self.Orvalho = Condicao(Pressao_Ponto_Orvalho,T,[x_1,x_2],None,None)
         
-        elif Constante == 'Pressao':
+        elif Constante == 'pressao':
             
             P = Valor_cte
             # Criação do eixo X para fazer os gráficos
@@ -1385,7 +1394,7 @@ class VLE(Thread):
             # Caracterização das fases
             self.Bolha   = Condicao(P,Temperatura_Ponto_Bolha,[y_1,y_2],None,None)
             self.Orvalho = Condicao(P,Temperatura_Ponto_Orvalho,[x_1,x_2],None,None)
-
+            
     def run(self):
         
         # Validação do algoritmo
