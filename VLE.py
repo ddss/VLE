@@ -207,17 +207,20 @@ class VLE(Thread):
         * ``PontoBolha_P`` & ``PontoBolha_T`` :
             * ``Bolha`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``liquido`` : Objeto da classe ``Condicao``, vide documentação da classe.
+            * ``vapor`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
             * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
         * ``PontoOrvalho_P`` & ``PontoOrvalho_T`` :
             * ``Orvalho`` : Objeto da classe ``Condicao``, vide documentação da classe.
+            * ``liquido`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``vapor`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``Bvirial`` (list): Uma lista de listas contendo os valores para os componentes puros e cruzados do segundo coeficiente Virial em unidade de volume.
             * ``phisat`` (list): Os coeficientes de fugacidade nas condições de saturação.
         * ``Flash``:
             * ``Bolha`` : Objeto da classe ``Condicao``, vide documentação da classe.
             * ``Orvalho`` : Objeto da classe ``Condicao``, vide documentação da classe.
-            * ``Beta`` (float): Valor da coeficiente Beta calculado no Flash
+            * ``condicao_global`` : Objeto da classe ``Condicao`` que armazena os dados inseridos no Flash.
+            * ``Beta`` (float): Valor da coeficiente Beta calculado no Flash.
             
         =======
         Métodos
@@ -241,6 +244,8 @@ class VLE(Thread):
             Método para realizar o cálculo do ponto de orvalho dado y e T.
         * ``PontoOrvalho_T``:
             Método para realizar o cálculo do ponto de orvalho dado y e P.
+        * ``Predicao``:
+            Método para realizar a predição para plotagem de gráficos.
             
         =========
         Exemplo 1

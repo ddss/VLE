@@ -17,7 +17,6 @@ Referências:
 
 @author: CaiqueFerreira
 """
-from numpy import array
 # Construção de gráficos
 from matplotlib.pyplot import figure, close, plot, xlabel, ylabel, title, xlim, legend, grid, show, figure, errorbar
 # Pacotes do sistema operacional
@@ -29,13 +28,6 @@ class Graficos:
 
         '''
         Algoritmo para criação das saídas gráficas dos cálculos envolvendo o equilíbrio líquido vapor, vide [1].
-        
-        =====================
-        Entradas obrigatórias
-        =====================
-
-        * Diagrama (str): O tipo de diagrama ou gráficor que se pretende realizar;
-        * VLE (objeto): objeto VLE após execuação do método Predicao executado
         
         ==============================
         Keywords (Entradas opcionais):
@@ -84,12 +76,12 @@ class Graficos:
         
         Após este passo, é acessado o método de predição, para caracterizar os gráficos. ::
         
-            >>> CalculoBolha.Predicao(330.0)
+            >>> CalculoBolha.Predicao('temperatura',313.15)
             
         Em seguida, pode plotado o diagrama Pxy, conforme consta em [1].  ::
         
-            >>> Graficos(CalculoBolha.Composicao_x1,CalculoBolha.Pressao_Ponto_Bolha, CalculoBolha.Pressao_Ponto_Orvalho,T = 330.0)
-            >>> Graficos.T_x_y(CalculoBolha)
+            >>> Graph = Graficos()
+            >>> Graph.P_x_y(CalculoBolha,313.15)
         
         =========
         Exemplo 2        
@@ -112,13 +104,14 @@ class Graficos:
         
         Após este passo, é acessado o método de predição, para caracterizar os gráficos. ::
         
-            >>> CalculoBolha.Predicao(330.0)
+            >>> CalculoBolha.Predicao('temperatura',313.15)
         
         Em seguida, pode plotado o diagrama xy para os componentes, conforme consta em [1].  ::
         
-            >>> Graficos('xy',Componentes, CalculoBolha.Composicao_x1,CalculoBolha.Composicao_y1,CalculoBolha.Composicao_y2,CalculoBolha.Composicao_x2,T = 330.0)  
+            >>> Graph = Graficos()  
+            >>> Graph.x_y(CalculoBolha,313.15)
         
-        Os gráficos são gerados automaticamente.
+        Os gráficos são salvos em na pasta 'Gráficos termodinâmicos' automaticamente.
         
         ===========
         Referências
@@ -175,15 +168,41 @@ class Graficos:
                 raise ValueError(u'Caso seja definido alguma inerteza, faz-se neessário definir as composição experimentais para as fases líquida e vapor, bem como suas respectivas incertezas.')
 
         #==============================================================================
-        # Validação dos tipos de variáveis para temperatura e pressão
+        # Validação dos tipos de variáveis
         #==============================================================================
+
+
+        if keywargs.get(self.__keywordsEntrada[0]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[0]),list):
+                 raise TypeError(u'As composições experimentais da fase líquida devem ser iseridas numa LISTA.')
+
+        if keywargs.get(self.__keywordsEntrada[1]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[1]),list):
+                 raise TypeError(u'As composições experimentais da fase vapor devem ser iseridas numa LISTA.')
+
         if keywargs.get(self.__keywordsEntrada[2]) is not None:
             if not isinstance(keywargs.get(self.__keywordsEntrada[2]),list):
-                 raise TypeError('A temperatura deve ser iserida como um LISTA.')
+                 raise TypeError(u'As temperaturas devem ser iseridas numa LISTA.')
 
         if keywargs.get(self.__keywordsEntrada[3]) is not None:
             if not isinstance(keywargs.get(self.__keywordsEntrada[3]),list):
-                 raise TypeError('As pressões devem ser inseridas em uma LISTA.')
+                 raise TypeError(u'As pressões devem ser inseridas numa LISTA.')
+                 
+        if keywargs.get(self.__keywordsEntrada[4]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[4]),list):
+                 raise TypeError(u'As incertezas das composições da fase líquida devem ser iseridas numa LISTA.')
+
+        if keywargs.get(self.__keywordsEntrada[5]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[5]),list):
+                 raise TypeError(u'As incertezas das composições da fase vapor devem ser iseridas numa LISTA.')
+
+        if keywargs.get(self.__keywordsEntrada[6]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[6]),list):
+                 raise TypeError(u'As incertezas das temperaturas devem ser iseridas numa LISTA.')
+
+        if keywargs.get(self.__keywordsEntrada[7]) is not None:
+            if not isinstance(keywargs.get(self.__keywordsEntrada[7]),list):
+                 raise TypeError(u'As incertezas das pressões devem ser inseridas numa LISTA.')
 
         #==============================================================================
         # Validação se houve a presença das incertezas sem os pontos experimentais
@@ -202,9 +221,9 @@ class Graficos:
         '''
         Método para criação do diagrama Pxy, pressão em função das composições, vide [1].
 
-        =======
-        Entrada
-        =======
+        ========
+        Entradas
+        ========
 
         * VLE (objeto)  : Objeto VLE que executou o método Predicao
         * T (float)     : temperatura para a qual foi executado
@@ -243,11 +262,10 @@ class Graficos:
                                                                     
         xlabel(u'x,y')
         ylabel(u'Pressão /bar')
-        title('Diagrama Pxy para {:s}-{:s} a {:.1f} {}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,T,unidT))
+        title('Diagrama Pxy para {:s}-{:s} a {:.1f} {:s}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,T,unidT))
         xlim(0,1)
         legend(['Dew Pressure','Bubble Pressure'],loc='best')
         grid() # Adiciona a grade ao gráfico
-        show()
         fig.savefig(self.base_path+'Diagrama_P_x_y.png')
         close()
 
@@ -255,6 +273,14 @@ class Graficos:
         '''
         Método para criação do diagrama Txy, temperatura em função das composições, vide [1].
         
+        ========
+        Entradas
+        ========
+
+        * VLE (objeto)  : Objeto VLE que executou o método Predicao
+        * P (float)     : temperatura para a qual foi executado
+        * unidP (string): unidade da temperatura
+
         ======
         Saídas
         ======
@@ -289,18 +315,25 @@ class Graficos:
         
         xlabel(u'x,y')
         ylabel(u'Temperatura /K')
-        title('Diagrama Txy para {:s}-{:s} a {:.3f} {}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,P,unidP))
+        title('Diagrama Txy para {:s}-{:s} a {:.3f} {:s}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,P,unidP))
         xlim(0,1)
         legend(['Bubble Temperature','Dew Temperature'],loc='best')
         grid() # Adiciona a grade ao gráfico
-        show()
         fig.savefig(self.base_path+'Diagrama_T_x_y.png')
         close()
         
-    def x_y(self):
+    def x_y(self,VLE,T,unidT='K'):
         '''
         Método para criação do diagrama xy, composição da fase de vapor em função 
-        da composicção da fase líquida,vide [1].
+        da composicção da fase líquida, a uma temperatura constante, vide [1].
+        
+        ========
+        Entradas
+        ========
+
+        * VLE (objeto)  : Objeto VLE que executou o método Predicao;
+        * T (float)     : temperatura para a qual foi executado;
+        * unidT (string): unidade da temperatura.
         
         ======
         Saídas
@@ -316,26 +349,24 @@ class Graficos:
         Chemical Engineering Thermodinamics. 7. ed. [S.l.]: Mc-Graw Hills,p. 254, 2004.
 
         '''
-        # TODO: CORRIGIR
-
         fig = figure() # Adiciona a figura
-        fig.add_subplot(1,1,1)
-        plot(self.x1,self.y1,'-') 
-        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[0].nome))
-        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[0].nome))
-        title('Diagrama xy para {:s} a {:.1f}K'.format(self.Componentes[0].nome,self.T))
-        xlim(0,1) # Dimensiona a imagem do gráfico
         
+        fig.add_subplot(1,1,1)
+        plot(VLE.Orvalho.comp_molar[0],VLE.Bolha.comp_molar[0],'-') 
+        xlabel(u'Composição de {:s} na fase líquida'.format(VLE.Componentes[0].nome))
+        ylabel(u'Composição de {:s} na fase de vapor'.format(VLE.Componentes[0].nome))
+        title('Diagrama xy para {:s} a {:.1f} {:s}'.format(VLE.Componentes[0].nome,T,unidT))
+        xlim(0,1) # Dimensiona a imagem do gráfico        
         grid() # Adiciona a grade ao gráfico
 
         fig = figure() # Adiciona a figura
         fig.add_subplot(1,1,1)
-        plot(self.x2,self.y2,'-')
-        xlabel(u'Composição de {:s} na fase líquida'.format(self.Componentes[1].nome))
-        ylabel(u'Composição de {:s} na fase de vapor'.format(self.Componentes[1].nome))
-        title('Diagrama xy para {:s} a {:.2f}K'.format(self.Componentes[1].nome,self.T))
+        plot(VLE.Orvalho.comp_molar[1],VLE.Bolha.comp_molar[1],'-')
+        xlabel(u'Composição de {:s} na fase líquida'.format(VLE.Componentes[1].nome))
+        ylabel(u'Composição de {:s} na fase de vapor'.format(VLE.Componentes[1].nome))
+        title('Diagrama xy para {:s} a {:.2f} {:s}'.format(VLE.Componentes[1].nome,T,unidT))
         xlim(0,1) # Dimensiona a imagem do gráfico
-        
         grid() # Adiciona a grade ao gráfico
-        show() # Mostra os gráficos
+        
+        fig.savefig(self.base_path+'Diagrama_x_y.png')
         close()

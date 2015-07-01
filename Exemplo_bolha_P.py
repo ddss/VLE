@@ -35,4 +35,5 @@ P = P.tolist()
 # Incertezas da temperatura
 yerr = array([0.001]*21).tolist()
 
-Graficos('Pxy',exemplo, x_experimentais = comp_liq, y_experimentais=comp_vap ,P_exp = P, P_incertezas = yerr, T_exp = 313.15 )
+Graph = Graficos(x_experimentais = comp_liq, y_experimentais=comp_vap ,P_exp = P, P_incertezas = yerr, T_exp = 313.15 )
+Graph.P_x_y(exemplo,313.15)

@@ -38,4 +38,5 @@ comp_liq = [0.9999999999999,0.937,0.920,0.880,0.796,0.693,0.662,0.579,0.500,0.42
 T = [383.4,385.0,385.4,386.3,388.1,390.5,391.4,393.9,396.3,399.0,401.3,404.4,407.0,411.4,413.2,414.3,417.5]
     # Incertezas da temperatura
 yerr = array([0.1]*17).tolist()
-Graficos('Txy',exemplo, x_experimentais = comp_liq, y_experimentais=comp_vap ,T_exp = T, T_incertezas = yerr, P_exp = 1.013 )
+Graph = Graficos(x_experimentais = comp_liq, y_experimentais=comp_vap ,T_exp = T, T_incertezas = yerr)
+Graph.T_x_y(exemplo,1.013)
