@@ -3,7 +3,6 @@
 from sqlite3 import connect
 from warnings import warn
 from scipy import exp, log
-from scipy.optimize import root
 from numpy import zeros
 
 class Componente_Caracterizar:
@@ -268,8 +267,44 @@ class Componente_Caracterizar:
                     if self.T > self.Tc:
                         raise ValueError(u'Para a equação de pressão de vapor escolhida para o método de cálculo: %s, é necessário que a temperatura esteja abaixo da temperatura crítica,'%(self.eqPsat,)+' Tc = %f.'%self.Tc)
 
-
-    def Pvap_Prausnitz_4th(self,VPA,VPB,VPC,VPD,T,Tc=None,Pc=None,Pvp_ini=101325,tol=1e-10):
+    def solver(self,f,df,arg,x0,itmax = 100, tol = 1e-10):
+       u'''
+       Método para encontrar as raízes das equações de Pvap e Tsat, utilizando o método numérico de Newton-Raphson.
+       
+       ========
+       Entradas
+       ========
+        
+        * f (def): Equação, cuja a raíz deseja-se encontrar, inserida como ``def`` na forma f(x,y)=0;
+        * df (def): Derivada da equação, também inserida como ``def``
+        * arg (float): Argumento extra das funções Pvap e Tsat. Pode ser pressão em bar, caso a função for Tsat, ou temperatura em Kelvin, caso a função for Pvap;
+        * x0 (float): Estimativa inicial para o método numérico;
+        * itmax (int): Número máximo de iterações;
+        * tol (float): tolerância para o cálculo da raiz da equação.
+        
+        ================
+        Valores default 
+        ================        
+        
+        * itmax   = 100
+        * tol     = 1e-10
+        
+        ======
+        Saídas
+        ======
+        
+        * Retorna a pressão de vapor em bar, caso for resolvida a função Pvap, ou a temperatura de saturação, caso for resolvida a função Tsat.
+        
+       '''
+       i = 0
+       x = x0
+       while abs(f(self,x,arg)) >= tol and i<=itmax:
+           xi = x
+           x = xi - f(self,xi,arg) / df(self,xi,arg)
+           i+=1
+       return x
+       
+    def Pvap_Prausnitz_4th(self,T,nEqPsat=None,Pvp_ini=101325,tol=1e-10):
         u'''
         Método para cálculo da pressão de vapor de componentes puros, conforme [1].
         
@@ -277,16 +312,10 @@ class Componente_Caracterizar:
         Entradas
         ========
         
-        * VPA (float): Parâmetro VPA;
-        * VPB (float): Parâmetro VPB;
-        * VPC (float): Parâmetro VPC;
-        * VPD (float): Parâmetro VPD;
         * T (float): Temperatura em Kelvin;
             
             * O valor de T inserido deve ser menor do que o valor de Tc.
     
-        * Tc (float): Temperatura crítica em Kelvin; 
-        * Pc (float): Pressão crítica em bar
         * Pvp_ini: Estimativa inicial para a pressão de vapor, quando nEq = 2 (Equação implícta).
         * tol: teolerância para o cálculo da raiz da equação nEq = 2 (Equação implícta)
         
@@ -311,30 +340,37 @@ class Componente_Caracterizar:
         
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
+        if nEqPsat is None:
+            nEqPsat = self.nEqPsat
+        else:
+            nEqPsat=nEqPsat
     
         # Equação implícita para cálculo de Psat para nEq = 2
-        def Eq2(Pvp,VPA,VPB,VPC,VPD,T): 
-            Res = VPA - VPB/T + VPC*log(T) + VPD*Pvp/(T**2.0)-log(Pvp) # Vide [1]
+        def Eq2(self,Pvp,T): 
+            Res = self.VPA - self.VPB/T + self.VPC*log(T) + self.VPD*Pvp/(T**2.0)-log(Pvp) # Vide [1]
+            return Res
+            
+        def dfEq2(self,Pvp,T):
+            
+            Res = T**(-2.0)*self.VPD - 1/Pvp
             return Res
     
-        if self.nEqPsat == 1: # Cálculo de Psat quando nEq = 1
-            Pc  = Pc # Bar
-            x   = 1 - T/Tc
-            Pvp = exp((VPA*x+VPB*(x**1.5)+VPC*(x**3.0)+VPD*(x**6.0))/(1.0-x))*Pc # Vide [1]
+        if nEqPsat == 1: # Cálculo de Psat quando nEq = 1
+            x   = 1 - T/self.Tc
+            Pvp = exp((self.VPA*x+self.VPB*(x**1.5)+self.VPC*(x**3.0)+self.VPD*(x**6.0))/(1.0-x))*self.Pc # Vide [1]
             # P.s.: Caso o T inserido seja maior que o valor de Tc, haverá um erro.
             
-        elif self.nEqPsat == 2:  # Cálculo de Psat quando nEq = 2
-            Pvp_ini = Pvp_ini # Bar, Estimativa inicial
-            Resul   = root(Eq2,Pvp_ini,args=(VPA,VPB,VPC,VPD,T),tol=tol) # Determinação das raízes da equação implícia
-            return Resul.x # Retorno
+        elif nEqPsat == 2:  # Cálculo de Psat quando nEq = 2
+            Resul   = self.solver(Eq2,dfEq2,T,Pvp_ini)
+            return Resul
     
-        elif self.nEqPsat == 3: # Cálculo de Psat quando nEq = 3
-           Pvp = exp(VPA-VPB/(T+VPC)) # Vide [1]
+        elif nEqPsat == 3: # Cálculo de Psat quando nEq = 3
+           Pvp = exp(self.VPA-self.VPB/(T+self.VPC)) # Vide [1]
     
         # Todos os Pvp são dados em bar
         return Pvp
         
-    def Tsat_Prausnitz_4th(self,VPA,VPB,VPC,VPD,P,Tc=None,Pc=None,Tsat_ini=500,tol=1e-10):
+    def Tsat_Prausnitz_4th(self,P,nEqPsat=None,Tsat_ini=500,tol=1e-10):
         u'''
         Método para cálculo da temperatura de componentes puros, conforme [1].
         
@@ -342,13 +378,9 @@ class Componente_Caracterizar:
         Entradas
         ========
         
-        * VPA (float): Parâmetro VPA;
-        * VPB (float): Parâmetro VPB;
-        * VPC (float): Parâmetro VPC;
-        * VPD (float): Parâmetro VPD;
         * P (float): Pressão em bar;
-        * Tc (float): Temperatura crítica em Kelvin; 
-        * Pc (float): Pressão crítica em bar
+        * Tsat_ini (float): Estimativa da temperatura inicial para os métodos numéricos;
+        * tol (float): tolerância para os métodos numéricos;
         
         ================
         Valores default 
@@ -369,39 +401,48 @@ class Componente_Caracterizar:
         
         [1] REID, R.C.; PRAUSNITZ, J.M.; POLING, B.E. The properties of Gases and Liquids, 4th edition, McGraw-Hill, 1987.
         '''
-    
+        if nEqPsat is None:
+            nEqPsat = self.nEqPsat
+        else:
+            nEqPsat = nEqPsat
+            
         # Equações implícitas
-        def Eq1(T,Pc,Tc,VPA,VPB,VPC,VPD,P):
-            Pc  = Pc # Bar
-            x   = 1 - T/Tc
-            Res = exp((VPA*x+VPB*(x**1.5)+VPC*(x**3.0)+VPD*(x**6.0))/(1.0-x))*Pc - P
+        def Eq1(self,T,P):
+            x   = 1 - T/self.Tc
+            Res = (self.VPA*x+self.VPB*(x**1.5)+self.VPC*(x**3.0)+self.VPD*(x**6.0))/(1.0-x) - log(P/self.Pc)
             return Res
         
-        def Eq2(T,VPA,VPB,VPC,VPD,P): 
-            Res = VPA - VPB/T + VPC*log(T) + VPD*P/(T**2.0)-log(P) # Vide [1]
+        def dfEq1(self,T,P):
+            
+            Res = self.Tc*(-self.VPA/self.Tc - 1.5*self.VPB*(-T/self.Tc + 1)**0.5/self.Tc - 3.0*self.VPC*(-T/self.Tc + 1)**2.0/self.Tc - 6.0*self.VPD*(-T/self.Tc + 1)**5.0/self.Tc)/T - self.Tc*(self.VPA*(-T/self.Tc + 1) + self.VPB*(-T/self.Tc + 1)**1.5 + self.VPC*(-T/self.Tc + 1)**3.0 + self.VPD*(-T/self.Tc + 1)**6.0)/T**2
+            return Res
+            
+        def Eq2(self,T,P): 
+            Res = self.VPA - self.VPB/T + self.VPC*log(T) + self.VPD*P/(T**2.0)-log(P) # Vide [1]
+            return Res
+            
+        def dfEq2(self,T,P):
+            
+            Res = -2.0*P*T**(-3.0)*self.VPD + self.VPC/T + self.VPB/T**2
             return Res
         
-        def Eq3(T,VPA,VPB,VPC,P):
-            Res = exp(VPA-VPB/(T+VPC)) - P # Vide [1]
+        def Eq3(VPA,VPB,VPC,P):
+            Res = VPB/(VPA-log(P))-VPC # Vide [1]
             return Res
-            
-        if self.nEqPsat == 1: # Cálculo de Psat quando nEq = 1
-            Tsat_ini = Tsat_ini # K, Estimativa inicial
-            Resul   = root(Eq1,Tsat_ini,args=(Pc,Tc,VPA,VPB,VPC,VPD,P),tol=tol) # Determinação das raízes da equação implícia
-            return Resul.x[0] # Retorno
-            
-        elif self.nEqPsat == 2:  # Cálculo de Psat quando nEq = 2
-            Tsat_ini = Tsat_ini # K, Estimativa inicial
-            Resul   = root(Eq2,Tsat_ini,args=(VPA,VPB,VPC,VPD,P),tol=tol) # Determinação das raízes da equação implícia
-            return Resul.x[0] # Retorno
-    
-        elif self.nEqPsat == 3: # Cálculo de Psat quando nEq = 3
-            Tsat_ini = Tsat_ini # K, Estimativa inicial
-            Resul   = root(Eq3,Tsat_ini,args=(VPA,VPB,VPC,P),tol=tol) # Determinação das raízes da equação implícia
-            return Resul.x[0] # Retorno
-    
-        # Todos os Tsat são em Kelvin
 
+        if nEqPsat == 1: # Cálculo de Psat quando nEq = 1
+            Resul = self.solver(Eq1,dfEq1,P,Tsat_ini)
+            return Resul
+
+        elif nEqPsat == 2:  # Cálculo de Psat quando nEq = 2
+            Resul   = self.solver(Eq2,dfEq2,P,Tsat_ini)
+            return Resul # Retorno
+    
+        elif nEqPsat == 3: # Cálculo de Psat quando nEq = 3
+            Eq3(self.VPA,self.VPB,self.VPC,P)         
+            # Retorno
+        
+        # Todos os Tsat são em Kelvin
 
     def Propriedade(self):
         u'''
@@ -488,7 +529,7 @@ class Componente_Caracterizar:
             #==============================================================================
             
             self.warnings()    
-            self.Psat = self.Pvap_Prausnitz_4th(self.VPA,self.VPB,self.VPC,self.VPD,self.T,self.Tc,self.Pc)
+            self.Psat = self.Pvap_Prausnitz_4th(self.T)
         
         
 class Modelo:

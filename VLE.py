@@ -934,7 +934,7 @@ class VLE(Thread):
             for j in xrange(self.NC):
                 if i != j:
                     comp[j] = fator*0.00000001
-            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc),T)[i])
+            phisat.append(self.Coeficiente_Fugacidade(comp,self.Componente[i].Pvap_Prausnitz_4th(T),T)[i])
         self.phisat = phisat
         
     
@@ -980,9 +980,9 @@ class VLE(Thread):
         cont   = 0; deltaP = 10000
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
-            P.append(sum([x[i]*coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
+            P.append(sum([x[i]*coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(T)*self.phisat[i]/coeffug[i]        for i in xrange(self.NC)]))
             # Cálculo de y por VLE
-            y       = [x[i]*coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
+            y       = [x[i]*coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(T)*self.phisat[i]/(coeffug[i]*P[cont]) for i in xrange(self.NC)]
             # Normalização do valor de y
             y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Atualização de phi por EoS
@@ -1037,7 +1037,7 @@ class VLE(Thread):
         x = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
         
         if Testimativa is None:
-            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*x[i] for i in xrange(self.NC)])]
+            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(P)*x[i] for i in xrange(self.NC)])]
         else:
             T = Testimativa
             
@@ -1045,7 +1045,7 @@ class VLE(Thread):
         cont   = 0; deltaT = 10        
         while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
             # cálculo da pressão de saturação P_i^(sat) por Prausnitz
-            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(T[cont]) for i in xrange(self.NC)]            
             # Cálculo de phisat
             self.PhiSat(T[cont])
             # Cálculo de gamma por modelos termodinâmicos
@@ -1059,7 +1059,7 @@ class VLE(Thread):
             # Cálculo da pressão de saturação P_j^(sat) por VLE
             psat     = [P/(sum([(x[i]*coefAct[i]*self.phisat[i]*psat_ini[i])/(psat_ini[j]*coeffug[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
             # Atualização do valor de T por Prausnitz
-            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].Tc,self.Componente[1].Pc))
+            T.append(self.Componente[1].Tsat_Prausnitz_4th(psat[1]))
             # Atualização do valor de deltaT
             deltaT  = abs((T[cont+1] - T[cont])/T[cont])
             cont+=1
@@ -1114,9 +1114,9 @@ class VLE(Thread):
         
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
-            P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i])    for i in xrange(self.NC)]))
+            P.append(1/sum([y[i]*coeffug[i]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(T)*self.phisat[i])    for i in xrange(self.NC)]))
             # Cálculo de x por VLE
-            x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc)*self.phisat[i]) for i in xrange(self.NC)]
+            x       = [y[i]*coeffug[i]*P[cont]/(coefAct[i]*self.Componente[i].Pvap_Prausnitz_4th(T)*self.phisat[i]) for i in xrange(self.NC)]
             # Normalização de x
             x       = [x[i]/(sum([x[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Cálculo de phi por EoS
@@ -1162,25 +1162,24 @@ class VLE(Thread):
         
         [2] SMITH, J. M.; NESS, H. C. VAN; ABBOTT, M. M. Introduction to Chemical 
         Engineering Thermodinamics. 7th. ed. [s.l.] Mc-Graw Hills, [s.d.]. 
-        ''' 
+        '''     
         #==============================================================================
         #------------------ Estimativas iniciais --------------------------------------
         #==============================================================================
         # Normalização do valor de y
         y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-
         if Testimativa is None:
-            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,P,self.Componente[i].Tc,self.Componente[i].Pc)*y[i] for i in xrange(self.NC)])]
+            T = [sum([self.Componente[i].Tsat_Prausnitz_4th(P)*y[i] for i in xrange(self.NC)])]
         else:
             T = Testimativa
-        
+       
         coeffug  = [1.0,1.0]
         coefAct  = [[1.0,1.0]]
         cont   = 0; deltaT = 10
         
         while (deltaT > self.tolAlg) and (cont<self.maxiter+1):
             # cálculo da pressão de saturação P_i^(sat) por Prausnitz
-            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T[cont],self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+            psat_ini     = [self.Componente[i].Pvap_Prausnitz_4th(T[cont]) for i in xrange(self.NC)]            
             # Cálculo de phisat
             self.PhiSat(T[cont])            
             # Atualização de phi por EoS
@@ -1201,11 +1200,11 @@ class VLE(Thread):
             # Cálculo da pressão de saturação P_j^(sat) por VLE
             psat     = [P*(sum([(y[i]*coeffug[i]*psat_ini[j])/(coefAct[contador][i]*self.phisat[i]*psat_ini[i]) for i in xrange(self.NC)])) for j in xrange(self.NC)]            
             # Atualização do valor de T por Prausnitz
-            T.append(self.Componente[1].Tsat_Prausnitz_4th(self.Componente[1].VPA,self.Componente[1].VPB,self.Componente[1].VPC,self.Componente[1].VPD,psat[1],self.Componente[1].Tc,self.Componente[1].Pc))
+            T.append(self.Componente[0].Tsat_Prausnitz_4th(psat[0]))
             # Atualização do valor de deltaT
             deltaT  = abs((T[cont+1] - T[cont])/T[cont])
             cont+=1
-            
+
         # Caracterização da fase vapor
         self.vapor   = Condicao(P,T[cont],y,coeffug,None)
         self.Orvalho = Condicao(P,T[cont],x,None,coefAct)
@@ -1245,7 +1244,7 @@ class VLE(Thread):
         '''
         # TDODO: documentaao
         z    = [z[i]/(sum([z[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
-        Psat = [self.Componente[i].Pvap_Prausnitz_4th(self.Componente[i].VPA,self.Componente[i].VPB,self.Componente[i].VPC,self.Componente[i].VPD,T,self.Componente[i].Tc,self.Componente[i].Pc) for i in xrange(self.NC)]            
+        Psat = [self.Componente[i].Pvap_Prausnitz_4th(T) for i in xrange(self.NC)]            
         self.PontoBolha_P(z,T)
         self.PontoOrvalho_P(z,T)
 
@@ -1304,7 +1303,7 @@ class VLE(Thread):
 	else:
 	    
 	    raise ValueError(u'Não é possível realizar o cálculo de Flash, dado que a condição de equilíbrio não é satisfeita.') 
-        
+    
     def Predicao(self,Constante,Valor_cte):
         '''
         Metodo para caracterização dos eixos Ox e Oy para a realização dos gráficos.
