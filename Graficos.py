@@ -264,7 +264,7 @@ class Graficos:
         ylabel(u'Pressão /bar')
         title('Diagrama Pxy para {:s}-{:s} a {:.1f} {:s}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,T,unidT))
         xlim(0,1)
-        legend(['Dew Pressure','Bubble Pressure'],loc='best')
+        legend([u'Pressão de orvalho',u'Pressão de bolha'],loc='best')
         grid() # Adiciona a grade ao gráfico
         fig.savefig(self.base_path+'Diagrama_P_x_y.png')
         close()
@@ -317,7 +317,7 @@ class Graficos:
         ylabel(u'Temperatura /K')
         title('Diagrama Txy para {:s}-{:s} a {:.3f} {:s}'.format(VLE.Componente[0].nome,VLE.Componente[1].nome,P,unidP))
         xlim(0,1)
-        legend(['Bubble Temperature','Dew Temperature'],loc='best')
+        legend([u'Temperatura de orvalho',u'Temperatura de bolha'],loc='best')
         grid() # Adiciona a grade ao gráfico
         fig.savefig(self.base_path+'Diagrama_T_x_y.png')
         close()

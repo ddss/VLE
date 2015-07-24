@@ -33,7 +33,7 @@ comp_liq = [0.00000000001,0.0293,0.0823,0.1602,0.1942,0.3055,0.3703,0.4357,0.498
 P = 0.01*array([24.367,28.831,31.544,32.764,33.015,33.381,33.365,33.276,33.121,32.849,32.388,31.704,30.672,28.991,27.464,26.914,24.938,23.446,21.506,19.938,17.897])
 P = P.tolist()
 # Incertezas da temperatura
-yerr = array([0.001]*21).tolist()
+yerr = array([0.015]*21).tolist()
 
-Graph = Graficos(x_experimentais = comp_liq, y_experimentais=comp_vap ,P_exp = P, P_incertezas = yerr, T_exp = 313.15 )
+Graph = Graficos(x_experimentais = comp_liq, y_experimentais=comp_vap ,P_exp = P, P_incertezas = yerr)
 Graph.P_x_y(exemplo,313.15)

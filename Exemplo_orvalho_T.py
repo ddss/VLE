@@ -21,7 +21,7 @@ Componentes = [Comp1,Comp2]
 model_vap = VIRIAL(Componentes)
 model_liq = UNIQUAC(Componentes,340.0,1)
 
-exemplo = VLE('PontoOrvalho_T',Componentes,model_liq,model_vap,z=[0.500,0.500],Temp=340.0,Pressao=1.013,estphi=[1.0,1.0],estBeta = 0.5,tolAlg=1e-10,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
+exemplo = VLE('PontoOrvalho_T',Componentes,model_liq,model_vap,z=[0.9999999999999,1-0.9999999999999],Temp=340.0,Pressao=1.013,estphi=[1.0,1.0],estBeta = 0.5,tolAlg=1e-10,toleq=1e-4,maxiter=500,z_coordenacao=10.0)
 exemplo.run()
 
 # Saídas dos cálculos
