@@ -884,7 +884,6 @@ class UNIQUAC(Modelo):
         miscible systems. AIChE Journal, v. 21, n. 1, p. 116–128, jan. 1975. ISSN
         0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690210115>
         '''
-        
         #==============================================================================
         #         NOME DO MODELO
         #==============================================================================
@@ -900,19 +899,25 @@ class UNIQUAC(Modelo):
         #==============================================================================
         self.FormaEquacao('UNIQUAC_parametros_interacao_binaria')
         self.formaEq       = FormaEqUNIQUAC
-        self.ValidacaoFormaEq()
-        
-        #==============================================================================
-        #         FAIXA DE TEMPERATURA
-        #==============================================================================
-        self.Busca_e_Validacao_da_faixa_Temp('UNIQUAC_parametros_interacao_binaria',T,self.formaEq)
-    
-        #==============================================================================
-        #         PARAMETROS DO MODELO
-        #==============================================================================
         if parametro_int == None:
+
+            self.ValidacaoFormaEq()
+            
+            #==============================================================================
+            #         FAIXA DE TEMPERATURA
+            #==============================================================================
+            self.Busca_e_Validacao_da_faixa_Temp('UNIQUAC_parametros_interacao_binaria',T,self.formaEq)
+        
+            #==============================================================================
+            #         PARAMETROS DO MODELO
+            #==============================================================================
+
             self.parametro_int = self.Busca_Parametros('UNIQUAC_parametros_interacao_binaria','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe UNIQUAC
         else:
+            #==============================================================================
+            #         PARAMETROS DO MODELO
+            #==============================================================================
+
             self.parametro_int = parametro_int
 
         #==============================================================================
@@ -970,7 +975,6 @@ class NRTL(Modelo):
         functions for liquid mixtures. AIChE Journal, v. 14, n. 1, p. 135–144, jan. 1968.
         ISSN 0001-1541. Disponível em: <http://doi.wiley.com/10.1002/aic.690140124>.
         '''
-        
         #==============================================================================
         #         NOME DO MODELO
         #==============================================================================
@@ -985,25 +989,25 @@ class NRTL(Modelo):
         #         FORMA DE EQUACAO 
         #==============================================================================
         self.FormaEquacao('NRTL')                
-        self.formaEq       = FormaEqNRTL        
-        self.ValidacaoFormaEq()
+        self.formaEq       = FormaEqNRTL
         
-        #==============================================================================
-        #         FAIXA DE TEMPERATURA
-        #==============================================================================
-        self.Busca_e_Validacao_da_faixa_Temp('NRTL',T,self.formaEq)
-        
-        #==============================================================================
-        #         PARAMETROS DO MODELO
-        #==============================================================================
-        if parametro_int == None:
+        if parametro_int is None and alpha is None:        
+            self.ValidacaoFormaEq()
+            
+            #==============================================================================
+            #         FAIXA DE TEMPERATURA
+            #==============================================================================
+            self.Busca_e_Validacao_da_faixa_Temp('NRTL',T,self.formaEq)
+            
+            #==============================================================================
+            #         PARAMETROS DO MODELO
+            #==============================================================================
             self.parametro_int = self.Busca_Parametros('NRTL','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe NRTL
+            
+            self.alpha   = self.Busca_Parametros('NRTL','alphaij',self.formaEq)  
         else:
             self.parametro_int = parametro_int
-        
-        if alpha == None:
-            self.alpha   = self.Busca_Parametros('NRTL','alphaij',self.formaEq)              
-        else:
+
             self.alpha   = alpha
 
         #==============================================================================
@@ -1071,24 +1075,24 @@ class WILSON(Modelo):
         #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)        
         #==============================================================================
         Modelo.__init__(self,Componentes) 
-       
         #==============================================================================
         #         FORMA DE EQUACAO        
         #==============================================================================
         self.FormaEquacao('Wilson')                
-        self.formaEq       = FormaEqWILSON                                
-        self.ValidacaoFormaEq()
+        self.formaEq       = FormaEqWILSON
         
-        #==============================================================================
-        #         FAIXA DE TEMPERATURA
-        #==============================================================================
-        self.Busca_e_Validacao_da_faixa_Temp('Wilson',T,self.formaEq)
-
-        #==============================================================================
-        #         PARAMETROS DO MODELO
-        #==============================================================================
-        if parametro_int == None:
-                    self.parametro_int = self.Busca_Parametros('Wilson','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe WILSON
+        if parametro_int == None:                      
+            self.ValidacaoFormaEq()
+            
+            #==============================================================================
+            #         FAIXA DE TEMPERATURA
+            #==============================================================================
+            self.Busca_e_Validacao_da_faixa_Temp('Wilson',T,self.formaEq)
+        
+            #==============================================================================
+            #         PARAMETROS DO MODELO
+            #==============================================================================
+            self.parametro_int = self.Busca_Parametros('Wilson','ParametroInteracao',self.formaEq) # Trasforma a def Parametros da classe Modelo em atributo da classe WILSON
         else:
             self.parametro_int = parametro_int
 
