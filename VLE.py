@@ -987,8 +987,8 @@ class VLE(Thread):
             y        = [y[i]/(sum([y[i] for i in xrange(self.NC)])) for i in xrange(self.NC)]
             # Atualização de phi por EoS
             coeffug = self.Coeficiente_Fugacidade(y,P[cont],T)
-            
-            deltaP = abs(P[cont] - P[cont-1])
+            if cont>1:
+                deltaP = abs(P[cont] - P[cont-1])
             cont+=1
             
         # Caracterização das fases
@@ -1110,7 +1110,7 @@ class VLE(Thread):
         P        = [self.Pressao]
         coeffug  = self.estphi
         coefAct  = self.estgama        
-        cont   = 0; deltaP = 10000
+        cont   = 1; deltaP = 10000
         
         while (deltaP > self.tolAlg) and (cont<self.maxiter+1):
             # Atualização do valor de P por VLE
