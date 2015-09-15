@@ -6,6 +6,9 @@ Isobaric vapor-liquid equilibrium for binary systems of toluene+o-xylene, benzen
 nonane+benzene and nonane+heptane at 101.3kPa. Fluid Phase Equilibria, 352, 86–92.
 http://doi.org/10.1016/j.fluid.2013.05.016
 """
+from matplotlib import use
+use('Agg')
+
 from Graficos import Graficos
 from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
 from VLE import VLE

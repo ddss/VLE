@@ -4,6 +4,9 @@ Exemplo do uso do cálculo do ponto de bolha com saídas gráficas.
 O exemplo foi uma aplicação do estudo de caso proposto em : V, E. S. P. B., & Oracz, P.
 (1987). For binary mixtures of methanol, ethanol, 1-propanol, 35, 253–278.
 """
+from matplotlib import use
+use('Agg')
+
 from Graficos import Graficos
 from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
 from VLE import VLE

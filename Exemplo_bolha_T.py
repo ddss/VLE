@@ -6,6 +6,9 @@ Isobaric vapor–liquid equilibria for mixtures of acetone, ethanol, and 2,2,4-t
 at 101.3kPa. Fluid Phase Equilibria, 231, 99–108. 
 http://doi.org/10.1016/j.fluid.2005.01.007
 """
+from matplotlib import use
+use('Agg')
+
 from Graficos import Graficos
 from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL
 from VLE import VLE
