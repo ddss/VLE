@@ -833,6 +833,70 @@ class VIRIAL(Modelo):
         if self.regra_mistura not in self.__regras_mistura_disponiveis:
             raise NameError(u'A regra de mistura inserida não está disponível. Regras disponíveis: '+'%, '.join(self.__regras_mistura_disponiveis)+'.')
     
+class SRK (Modelo):
+
+    def __init__(self,Componentes,parametro_int=None):
+        u'''
+        Rotina para busca dos parâmetros do modelo SRK, vide [1].
+
+        ========
+        Entradas
+        ========
+
+        * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
+
+        =========
+        Atributos
+        =========
+
+        * ``parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
+
+        =======
+        Exemplo
+        =======
+
+        Como já foi citado, a entrada ``Componentes`` é uma lista de objetos ``Componente_Caracterizar``, portanto
+        o primeiro passo para usar esta classe é acessar a classe ``Componente_Caracterizar``, vide documentação da
+        classe, da seguinte forma: ::
+
+            Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+            Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
+
+        Em seguida, a classe ``SRK`` pode ser acessada do seguinte modo: ::
+
+           modelo=  SRK([Comp1,Comp2])
+
+        ===========
+        Referências
+        ===========
+
+        [1] SOAVE, Giorgio. Equilibrium constant from a modified Redilch-Kowng equation os state. Chemical Engineering;
+         1972, Vol.27, pp. 1197-1203
+        '''
+
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'SRK' # Atributo útil para a rotina VLE
+
+
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)
+        #==============================================================================
+        Modelo.__init__(self,Componentes)
+
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro_int == None:
+            self.parametro_int = self.Busca_Parametros('SRK','ParametroInteração') # Trasforma a def Parametros da classe Modelo em atributo da classe SRK
+        else:
+            self.parametro_int = parametro_int
+
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================
+        self._Modelo__conector.close()
 
 class UNIQUAC(Modelo):
    
