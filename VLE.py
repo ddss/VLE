@@ -903,8 +903,38 @@ class VLE(Thread):
                 warn(u'A pressão do sistema é superior à da validação da equação VIRIAL, vide documentação da mesma.')
                 
         return phi
-        
-    def PhiSat(self,T):
+
+        if self.model_vap.nome_modelo == 'SRK':
+            #Parâmetros Puros
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    if i==j:
+                        Tr[i][j]=T/self.componente[i].Tc
+                        Pr[i][j]=P/self.componente[i].Pc
+                        ac[i][j]= 0.42748*((R*self.componente[i].Tc)**2)/self.componente[i].Pc
+                        bb[i][j]= 0.08664*R*self.componente[i].Tc/self.componente[i].Pc
+                        fw[i][j]= 0.48 + 1.574*self.componente[i].w - 0.176*self.componente[i]**2
+                        alpha[i][j]= (1+ fw[i][j]*(1- Tr[i][j])**0.5)**2
+                        aa[i][j]= ac[i][j]* alpha[i][j]
+
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    if i!= j:
+                        k_int_binaria[i][j]=self.model_vap.k_int_binaria
+                        aij[i][j]= (1-k_int_binaria[i][j])* (aa[i][i]*aa[j][j]**0.5)
+
+            for i in xrange(self.NC):
+                for j in xrange(self.NC):
+                    if i==j:
+                        bmist= sum(bb[i][j]*y[i])
+                        amist= sum(aa[i][j])
+
+        #TODO= finalizar
+
+
+
+
+     def PhiSat(self,T):
         '''
         Módulo para calcular o coeficiente de fugacidade nas condições de saturação segundo [1] e [2].
         
