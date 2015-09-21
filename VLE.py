@@ -902,39 +902,47 @@ class VLE(Thread):
             else:
                 warn(u'A pressão do sistema é superior à da validação da equação VIRIAL, vide documentação da mesma.')
                 
-        return phi
+
 
         if self.model_vap.nome_modelo == 'SRK':
             #Parâmetros Puros
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     if i==j:
-                        Tr[i][j]=T/self.componente[i].Tc
-                        Pr[i][j]=P/self.componente[i].Pc
-                        ac[i][j]= 0.42748*((R*self.componente[i].Tc)**2)/self.componente[i].Pc
-                        bb[i][j]= 0.08664*R*self.componente[i].Tc/self.componente[i].Pc
-                        fw[i][j]= 0.48 + 1.574*self.componente[i].w - 0.176*self.componente[i]**2
+                        Tr[i][j]=T/self.Componente[i].Tc
+                        Pr[i][j]=P/self.Componente[i].Pc
+                        ac[i][j]= 0.42748*((R*self.Componente[i].Tc)**2)/self.Componente[i].Pc
+                        bb[i][j]= 0.08664*R*self.Componente[i].Tc/self.Componente[i].Pc
+                        fw[i][j]= 0.48 + 1.574*self.Componente[i].w - 0.176*self.Componente[i]**2
                         alpha[i][j]= (1+ fw[i][j]*(1- Tr[i][j])**0.5)**2
                         aa[i][j]= ac[i][j]* alpha[i][j]
-
+            #Regra da Mistura
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     if i!= j:
                         k_int_binaria[i][j]=self.model_vap.k_int_binaria
                         aij[i][j]= (1-k_int_binaria[i][j])* (aa[i][i]*aa[j][j]**0.5)
+            #Parâmetro de Mistura
+            Bmixture =[[sum(bb[i][j]*y[i])    for j in xrange(NC)]    for i in xrange(NC)]
+            Am= [[sum(aa[i][j]**0.5) * y[i]   for j in xrange(NC)]    for i in xrange(NC)]
+            Amixture= Am**2
+
+            A= Amixture*P/(R*T)**2
+            B= Bmixture*P/R*T
+            # Parâmetros para a equação do fator de compressibilidade, Z
+            #a2= -1
+            #a1=A - B - B**2
+            #a0= -A*B
+
+            #Z= max(roots([1, a2, a1, a0]))
 
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     if i==j:
-                        bmist= sum(bb[i][j]*y[i])
-                        amist= sum(aa[i][j])
+                        phi= exp[(bb[i][j]/Bmixture) * (Z-1) - log(Z-B) - (A/B) * ((2*(aa[i][j]**0.5)/(Amixture**0.5)) - bb[i][j]/Bmixture) * log(1+ B/Z)]
+        return  phi
 
-        #TODO= finalizar
-
-
-
-
-     def PhiSat(self,T):
+    def PhiSat(self,T):
         '''
         Módulo para calcular o coeficiente de fugacidade nas condições de saturação segundo [1] e [2].
         
