@@ -901,7 +901,6 @@ class VLE(Thread):
                 warn(u'A pressão do sistema é inferior à da validação da equação VIRIAL, vide documentação da mesma.')
             else:
                 warn(u'A pressão do sistema é superior à da validação da equação VIRIAL, vide documentação da mesma.')
-                
 
 
         if self.model_vap.nome_modelo == 'SRK':
@@ -920,7 +919,7 @@ class VLE(Thread):
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     if i!= j:
-                        k_int_binaria[i][j]=self.model_vap.k_int_binaria
+                        k_int_binaria[i][j]=self.model_vap.parametro_int
                         aij[i][j]= (1-k_int_binaria[i][j])* (aa[i][i]*aa[j][j]**0.5)
             #Parâmetro de Mistura
             Bmixture =[[sum(bb[i][j]*y[i])    for j in xrange(NC)]    for i in xrange(NC)]

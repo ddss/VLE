@@ -889,7 +889,7 @@ class SRK (Modelo):
         #         PARAMETROS DO MODELO
         #==============================================================================
         if parametro_int == None:
-            self.parametro_int = self.Busca_Parametros('SRK','ParametroInteração') # Trasforma a def Parametros da classe Modelo em atributo da classe SRK
+            self.parametro_int = self.Busca_Parametros('SRK','kij') # Trasforma a def Parametros da classe Modelo em atributo da classe SRK
         else:
             self.parametro_int = parametro_int
 
