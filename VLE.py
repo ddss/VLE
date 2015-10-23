@@ -37,7 +37,7 @@ sys.setdefaultencoding("utf-8") # Forçar o sistema utilizar o coding utf-8
 
 from threading import Thread
 from warnings import warn
-from numpy import log, exp, size, abs, zeros, linspace
+from numpy import log, exp, size, abs, zeros, linspace, poly1d, roots
 
 class Condicao:
     
@@ -904,42 +904,50 @@ class VLE(Thread):
 
 
         if self.model_vap.nome_modelo == 'SRK':
+
+            Tre     = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            ac      = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            bb      = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            fw      = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            alpha   = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            aa      = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+            aij     = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
+
             #Parâmetros Puros
             for i in xrange(self.NC):
-                for j in xrange(self.NC):
-                    if i==j:
-                        Tr[i][j]=T/self.Componente[i].Tc
-                        Pr[i][j]=P/self.Componente[i].Pc
-                        ac[i][j]= 0.42748*((R*self.Componente[i].Tc)**2)/self.Componente[i].Pc
-                        bb[i][j]= 0.08664*R*self.Componente[i].Tc/self.Componente[i].Pc
-                        fw[i][j]= 0.48 + 1.574*self.Componente[i].w - 0.176*self.Componente[i]**2
-                        alpha[i][j]= (1+ fw[i][j]*(1- Tr[i][j])**0.5)**2
-                        aa[i][j]= ac[i][j]* alpha[i][j]
+                    Tre[i][i] = T/self.Componente[i].Tc
+                    ac[i][i] = 0.42748*((R*self.Componente[i].Tc)**2)/self.Componente[i].Pc
+                    bb[i][i] = 0.08664*R*self.Componente[i].Tc/self.Componente[i].Pc
+                    fw[i][i] = 0.48 + 1.574*self.Componente[i].w - 0.176*self.Componente[i].w**2
+                    alpha[i][i] = ((1 + fw[i][i] * (1 - Tre[i][i]**0.5)))**2
+                    aa[i][i] = ac[i][i] * alpha[i][i]
+
+            k_int_binaria= self.model_vap.parametro_int
             #Regra da Mistura
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                     if i!= j:
-                        k_int_binaria[i][j]=self.model_vap.parametro_int
-                        aij[i][j]= (1-k_int_binaria[i][j])* (aa[i][i]*aa[j][j]**0.5)
+                        aij[i][j] = ((aa[i][i]*aa[j][j])**0.5) * (1 - k_int_binaria[i][j])
+
             #Parâmetro de Mistura
-            Bmixture =[[sum(bb[i][j]*y[i])    for j in xrange(NC)]    for i in xrange(NC)]
-            Am= [[sum(aa[i][j]**0.5) * y[i]   for j in xrange(NC)]    for i in xrange(NC)]
-            Amixture= Am**2
+            Bmixture = sum([bb[i][i] * y[i]     for i in xrange(self.NC)])
+            Amixture = (sum([aa[i][i]**0.5 * y[i]   for i in xrange(self.NC)])**2)
 
-            A= Amixture*P/(R*T)**2
-            B= Bmixture*P/R*T
+            A = Amixture*P/(R*T)**2
+            B = Bmixture *P/(R*T)
+
             # Parâmetros para a equação do fator de compressibilidade, Z
-            #a2= -1
-            #a1=A - B - B**2
-            #a0= -A*B
+            a2 = -1
+            a1 = A - B - B**2
+            a0 = -A*B
+            coef =([1, a2, a1, a0])
+            p = poly1d(coef)
+            Z = max(roots(p))
 
-            #Z= max(roots([1, a2, a1, a0]))
+            phi = [exp((bb[i][i]/Bmixture) * (Z-1) - log(Z-B) - (A/B) * ((2*(aa[i][i]**0.5)/(Amixture**0.5)) - bb[i][i]/Bmixture) * log(1+ B/Z)) for i in xrange(self.NC)]
 
-            for i in xrange(self.NC):
-                for j in xrange(self.NC):
-                    if i==j:
-                        phi= exp[(bb[i][j]/Bmixture) * (Z-1) - log(Z-B) - (A/B) * ((2*(aa[i][j]**0.5)/(Amixture**0.5)) - bb[i][j]/Bmixture) * log(1+ B/Z)]
         return  phi
+
 
     def PhiSat(self,T):
         '''
