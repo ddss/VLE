@@ -898,6 +898,74 @@ class SRK (Modelo):
         #==============================================================================
         self._Modelo__conector.close()
 
+class PengRobinson (Modelo):
+
+    def __init__(self,Componentes,parametro_int=None):
+        u'''
+        Rotina para busca dos parâmetros do modelo PengRobinson, vide [1].
+
+        ========
+        Entradas
+        ========
+
+        * Componentes (list): É uma lista de objetos ``Componente_Caracterizar``, vide documentação da dessa classe;
+
+        =========
+        Atributos
+        =========
+
+        * ``parametro_int``: Uma lista de listas contendo os parâmetros de interação da mistura desejada.
+
+        =======
+        Exemplo
+        =======
+
+        Como já foi citado, a entrada ``Componentes`` é uma lista de objetos ``Componente_Caracterizar``, portanto
+        o primeiro passo para usar esta classe é acessar a classe ``Componente_Caracterizar``, vide documentação da
+        classe, da seguinte forma: ::
+
+            Comp1 = Componente_Caracterizar('Metano',ConfigPsat=('Prausnitz4th',1),T=100.0)
+            Comp2 = Componente_Caracterizar('Etano',ConfigPsat=('Prausnitz4th',1),T=289.9)
+
+        Em seguida, a classe ``PengRobinson`` pode ser acessada do seguinte modo: ::
+
+           modelo=  PengRobinson([Comp1,Comp2])
+
+        ===========
+        Referências
+        ===========
+
+        [1]  PENG,Ding-Yu and ROBINSON, Donald B. A New Two-Constant Equation of State. Ind. Eng. Chem., Fundam;
+         Vol. 15, No. 1, 1976
+
+
+        '''
+
+        #==============================================================================
+        #         NOME DO MODELO
+        #==============================================================================
+        self.nome_modelo = 'PengRobinson' # Atributo útil para a rotina VLE
+
+
+        #==============================================================================
+        #         BUSCA ID NA CLASSE MÃE (CLASSE MODELO)
+        #==============================================================================
+        Modelo.__init__(self,Componentes)
+
+        #==============================================================================
+        #         PARAMETROS DO MODELO
+        #==============================================================================
+        if parametro_int == None:
+            self.parametro_int = self.Busca_Parametros('PengRobinson','kij') # Trasforma a def Parametros da classe Modelo em atributo da classe PR
+        else:
+            self.parametro_int = parametro_int
+
+        #==============================================================================
+        #         ENCERRAR CONEXÃO COM O BANCO
+        #==============================================================================
+        self._Modelo__conector.close()
+
+
 class UNIQUAC(Modelo):
    
     def __init__(self,Componentes,T,FormaEqUNIQUAC = None,parametro_int=None):

@@ -8,7 +8,7 @@ from matplotlib import use
 use('Agg')
 
 from Graficos import Graficos
-from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL,SRK
+from Conexao import Componente_Caracterizar, UNIQUAC, VIRIAL,SRK, PengRobinson
 from VLE import VLE
 from numpy import array
 
@@ -20,7 +20,8 @@ Componentes = [Comp1,Comp2]
 
 # Caracterizando os modelos e equações            
 #model_vap = VIRIAL(Componentes)
-model_vap = SRK(Componentes)
+#model_vap = SRK(Componentes)
+model_vap = PengRobinson(Componentes)
 model_liq = UNIQUAC(Componentes,313.15,1)
 
 exemplo = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.3703,1-0.3703],Temp=313.15,Pressao=1.013)
