@@ -958,7 +958,6 @@ class VLE(Thread):
             aij = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             bij = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
 
-
             # Parâmetros Puros
             for i in xrange(self.NC):
                 Tre[i][i] = T / self.Componente[i].Tc
@@ -983,9 +982,17 @@ class VLE(Thread):
 
             B = Bmixture * P / (R * T)
             A = Amixture * P/(R*T)**2
-        #TODO
 
-        return  phi
+            #Parâmetros para o fator de compressibilidade, Z
+            a2 = B-1
+            a1 = A -2*B -3*B**2
+            a0 = -A*B + B**2 + B**3
+            coef =([1, a2, a1, a0])
+            p = poly1d(coef)
+            Z = max(roots(p))
+            #TODO
+
+            return  phi
 
     def PhiSat(self,T):
         '''
