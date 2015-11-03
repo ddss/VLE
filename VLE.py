@@ -37,7 +37,7 @@ sys.setdefaultencoding("utf-8") # Forçar o sistema utilizar o coding utf-8
 
 from threading import Thread
 from warnings import warn
-from numpy import log, exp, size, abs, zeros, linspace, poly1d, roots
+from numpy import log, exp, size, abs, zeros, linspace, poly1d, roots, sqrt
 
 class Condicao:
 
@@ -949,7 +949,6 @@ class VLE(Thread):
 
         if self.model_vap.nome_modelo == 'PengRobinson':
             Tre = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
-            Pre = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             ac = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             bb = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             fw = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
@@ -961,7 +960,6 @@ class VLE(Thread):
             # Parâmetros Puros
             for i in xrange(self.NC):
                 Tre[i][i] = T / self.Componente[i].Tc
-                Pre[i][i] = P / self.Componente[i].Pc
                 ac[i][i] = 0.4572355289 * ((R * self.Componente[i].Tc) ** 2) / self.Componente[i].Pc
                 bb[i][i] = 0.0777960739 * R * self.Componente[i].Tc / self.Componente[i].Pc
                 fw[i][i] = 0.37464 + 1.54226 * self.Componente[i].w - 0.26992 * self.Componente[i].w ** 2
@@ -990,9 +988,11 @@ class VLE(Thread):
             coef =([1, a2, a1, a0])
             p = poly1d(coef)
             Z = max(roots(p))
-            #TODO
+            aux= [sum(y[i] * aij[i][k] for k in xrange(self.NC)) for i in xrange(self.NC)]
 
-            return  phi
+            #phi= [exp((Z-1)* (bb[i][i]/Bmixture) - log(Z-B) - A/(2*sqrt(2)*B) * ((2*aux/Amixture)-(bb[i][i]/Bmixture))* log((Z+(1+sqrt(2))* B)/ (Z+(1-sqrt(2))* B))) for i in xrange(self.NC)]
+
+        return  phi
 
     def PhiSat(self,T):
         '''

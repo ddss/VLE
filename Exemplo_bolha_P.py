@@ -24,7 +24,7 @@ Componentes = [Comp1,Comp2]
 model_vap = PengRobinson(Componentes)
 model_liq = UNIQUAC(Componentes,313.15,1)
 
-exemplo = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.3703,1-0.3703],Temp=313.15,Pressao=1.013)
+exemplo = VLE('PontoBolha_P',Componentes,model_liq,model_vap,z=[0.3703,1-0.3703],Temp=313.15,Pressao=1.013,tolAlg=1e-20)
 exemplo.run()
 
 print exemplo.Bolha.Pressao
