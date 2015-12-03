@@ -926,8 +926,7 @@ class VLE(Thread):
             #Regra da Mistura
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
-                    if i!= j:
-                        aij[i][j] = ((aa[i][i]*aa[j][j])**0.5) * (1 - k_int_binaria[i][j])
+                    aij[i][j] = ((aa[i][i]*aa[j][j])**0.5) * (1 - k_int_binaria[i][j])
 
             #Parâmetro de Mistura
             Bmixture = sum([bb[i][i] * y[i]     for i in xrange(self.NC)])
@@ -955,7 +954,6 @@ class VLE(Thread):
             alpha = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             aa = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
             aij = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
-            bij = [[0.0 for j in xrange(self.NC)] for i in xrange(self.NC)]
 
             # Parâmetros Puros
             for i in xrange(self.NC):
@@ -967,15 +965,13 @@ class VLE(Thread):
                 aa[i][i] = ac[i][i] * alpha[i][i]
 
             k_int_binaria = self.model_vap.parametro_int
-            l_int_binaria = 0
             # Regra da Mistura
             for i in xrange(self.NC):
                 for j in xrange(self.NC):
                         aij[i][j] = ((aa[i][i] * aa[j][j]) ** 0.5) * (1 - k_int_binaria[i][j])
-                        bij[i][j] = (1 - l_int_binaria) * (bb[i][i] + bb[j][j]) / 2
 
             # Parâmetro de Mistura
-            Bmixture = sum([bij[i][j] * y[i] * y[j]  for j in xrange(self.NC)   for i in xrange(self.NC)])
+            Bmixture = sum([bb[i][i] * y[i]     for i in xrange(self.NC)])
             Amixture = sum([aij[i][j] * y[i] * y[j]   for j in xrange(self.NC)     for i in xrange(self.NC)])
 
             B = Bmixture * P / (R * T)
@@ -988,11 +984,11 @@ class VLE(Thread):
             coef =([1, a2, a1, a0])
             p = poly1d(coef)
             Z = max(roots(p))
-            aux= [sum(y[i] * aij[i][k] for k in xrange(self.NC)) for i in xrange(self.NC)]
+            aux = [sum([y[i] * aij[i][k] for k in xrange(self.NC)]) for i in xrange(self.NC)]
 
-            #phi= [exp((Z-1)* (bb[i][i]/Bmixture) - log(Z-B) - A/(2*sqrt(2)*B) * ((2*aux/Amixture)-(bb[i][i]/Bmixture))* log((Z+(1+sqrt(2))* B)/ (Z+(1-sqrt(2))* B))) for i in xrange(self.NC)]
+            phi = [exp((Z-1) * (bb[i][i]/Bmixture) - log(Z-B) - A/(2*sqrt(2)*B) * ((2*aux[i] / Amixture) - (bb[i][i]/Bmixture))* log((Z+(1+sqrt(2))* B)/ (Z+(1-sqrt(2))* B)) ) for  i in xrange(self.NC)]
 
-        return  phi
+        return phi
 
     def PhiSat(self,T):
         '''
